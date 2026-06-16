@@ -1,10 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
-import { CLOSED_STATUSES, ROLES, type ListingStatus } from "@/lib/constants";
+import {
+  ROLES,
+  DEAL_STATUSES,
+  SECTORS,
+  type ListingStatus,
+  type DealStatus,
+  type Sector,
+} from "@/lib/constants";
 import { daysSince } from "@/lib/utils";
 import type { ListingRow, DealRow, LeadRow } from "@/lib/database.types";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { demoScopedData } from "@/lib/demo-data/queries";
-import { demoUsers, demoAgents, demoDeals } from "@/lib/demo-data/dataset";
+import {
+  demoUsers,
+  demoAgents,
+  demoDeals,
+  demoListings,
+} from "@/lib/demo-data/dataset";
+
+/** Transaction value of a deal (sale price, or annualised rental). */
+function dealValue(d: DealRow): number {
+  if (d.deal_type === "rental") return (Number(d.rental_price) || 0) * 12;
+  return Number(d.sold_price) || 0;
+}
 
 const STALE_DAYS = 45;
 
@@ -29,8 +47,13 @@ export type DashboardStats = {
   byStatus: { status: ListingStatus; count: number }[];
   monthlyLeads: { month: string; count: number }[];
   monthlyClosed: { month: string; count: number }[];
+  monthlySales: { month: string; value: number }[];
   areaPerformance: { area: string; listings: number; closed: number }[];
   funnel: { stage: string; count: number }[];
+  dealStatusBreakdown: { status: DealStatus; count: number; value: number }[];
+  salesValueThisMonth: number;
+  salesValueLastMonth: number;
+  bySector: { sector: Sector; closed: number; value: number }[];
 };
 
 type StatScope = { ownerId?: string };
@@ -205,6 +228,64 @@ export async function getDashboardStats(
   const monthlyLeads = months.map((m) => ({ month: m, count: leadCounts.get(m) ?? 0 }));
   const monthlyClosed = months.map((m) => ({ month: m, count: closedCounts.get(m) ?? 0 }));
 
+  // Monthly sales value (closed deals)
+  const salesByMonth = new Map(months.map((m) => [m, 0]));
+  for (const d of closedDeals) {
+    if (!d.closed_date) continue;
+    const k = monthKey(d.closed_date);
+    if (salesByMonth.has(k))
+      salesByMonth.set(k, (salesByMonth.get(k) ?? 0) + dealValue(d));
+  }
+  const monthlySales = months.map((m) => ({ month: m, value: salesByMonth.get(m) ?? 0 }));
+
+  // Sales value this month vs last month (closed)
+  const lastMonthStart = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() - 1,
+    1,
+  ).toISOString();
+  let salesValueThisMonth = 0;
+  let salesValueLastMonth = 0;
+  for (const d of closedDeals) {
+    if (!d.closed_date) continue;
+    const iso = new Date(d.closed_date).toISOString();
+    if (iso >= monthStart) salesValueThisMonth += dealValue(d);
+    else if (iso >= lastMonthStart) salesValueLastMonth += dealValue(d);
+  }
+
+  // Deal status breakdown (intelligence: booking/closed/pending/cancelled/refund/others)
+  const statusAgg = new Map<DealStatus, { count: number; value: number }>();
+  for (const s of DEAL_STATUSES) statusAgg.set(s, { count: 0, value: 0 });
+  for (const d of deals) {
+    const cur = statusAgg.get(d.deal_status) ?? { count: 0, value: 0 };
+    cur.count += 1;
+    cur.value += dealValue(d);
+    statusAgg.set(d.deal_status, cur);
+  }
+  const dealStatusBreakdown = DEAL_STATUSES.map((status) => ({
+    status,
+    count: statusAgg.get(status)!.count,
+    value: statusAgg.get(status)!.value,
+  }));
+
+  // Per-sector performance (closed deals)
+  const listingById = new Map(listings.map((l) => [l.id, l]));
+  const sectorAgg = new Map<Sector, { closed: number; value: number }>();
+  for (const s of SECTORS) sectorAgg.set(s, { closed: 0, value: 0 });
+  for (const d of closedDeals) {
+    const l = listingById.get(d.listing_id);
+    if (!l) continue;
+    const cur = sectorAgg.get(l.category as Sector);
+    if (!cur) continue;
+    cur.closed += 1;
+    cur.value += dealValue(d);
+  }
+  const bySector = SECTORS.map((sector) => ({
+    sector,
+    closed: sectorAgg.get(sector)!.closed,
+    value: sectorAgg.get(sector)!.value,
+  }));
+
   // Conversion funnel
   const viewsTotal = listings.reduce((s, l) => s + (l.views_count || 0), 0);
   const funnel = [
@@ -214,7 +295,7 @@ export async function getDashboardStats(
     {
       stage: "Booked",
       count: deals.filter((d) =>
-        ["booked", "processing", "closed"].includes(d.deal_status),
+        ["booked", "pending", "closed"].includes(d.deal_status),
       ).length,
     },
     { stage: "Closed", count: closedDeals.length },
@@ -236,8 +317,13 @@ export async function getDashboardStats(
     byStatus,
     monthlyLeads,
     monthlyClosed,
+    monthlySales,
     areaPerformance,
     funnel,
+    dealStatusBreakdown,
+    salesValueThisMonth,
+    salesValueLastMonth,
+    bySector,
   };
 }
 
@@ -442,65 +528,184 @@ export async function getSwot(scope: StatScope = {}): Promise<Swot> {
   };
 }
 
+export type LeaderRow = {
+  userId: string;
+  name: string;
+  photo: string | null;
+  area: string | null;
+  thisMonthValue: number;
+  lastMonthValue: number;
+  thisMonthClosed: number;
+  totalValue: number;
+  totalClosed: number;
+  totalCommission: number;
+  rankDelta: number; // +ve = climbed vs last month
+};
+
 export type AdminOverview = {
   totalAgents: number;
   activeAgents: number;
-  agentLeaderboard: { name: string; closed: number; commission: number }[];
+  pendingAgents: number;
+  sectorLeaderboards: { sector: Sector; rows: LeaderRow[] }[];
+  overallLeaderboard: LeaderRow[];
 };
+
+type AgentMeta = { name: string; photo: string | null; area: string | null };
+
+type Acc = {
+  tm: number;
+  lm: number;
+  tmClosed: number;
+  total: number;
+  totalClosed: number;
+  commission: number;
+};
+const emptyAcc = (): Acc => ({
+  tm: 0,
+  lm: 0,
+  tmClosed: 0,
+  total: 0,
+  totalClosed: 0,
+  commission: 0,
+});
+
+/** Build per-sector + overall Top-10 leaderboards with month-over-month deltas. */
+function buildLeaderboards(
+  deals: DealRow[],
+  sectorOf: (listingId: string) => Sector | null,
+  metaOf: (agentId: string) => AgentMeta,
+) {
+  const monthStart = startOfMonth();
+  const lastStart = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() - 1,
+    1,
+  ).toISOString();
+
+  const perSector = new Map<Sector, Map<string, Acc>>();
+  for (const s of SECTORS) perSector.set(s, new Map());
+  const overall = new Map<string, Acc>();
+
+  for (const d of deals) {
+    if (d.deal_status !== "closed" || !d.closed_date) continue;
+    const sector = sectorOf(d.listing_id);
+    if (!sector) continue;
+    const v = dealValue(d);
+    const iso = new Date(d.closed_date).toISOString();
+    const inThis = iso >= monthStart;
+    const inLast = !inThis && iso >= lastStart;
+
+    const bump = (m: Map<string, Acc>) => {
+      const a = m.get(d.agent_id) ?? emptyAcc();
+      a.total += v;
+      a.totalClosed += 1;
+      a.commission += Number(d.commission_amount) || 0;
+      if (inThis) {
+        a.tm += v;
+        a.tmClosed += 1;
+      } else if (inLast) {
+        a.lm += v;
+      }
+      m.set(d.agent_id, a);
+    };
+    bump(perSector.get(sector)!);
+    bump(overall);
+  }
+
+  const rank = (m: Map<string, Acc>): LeaderRow[] => {
+    const entries = [...m.entries()];
+    const lastRank = new Map(
+      [...entries]
+        .sort((a, b) => b[1].lm - a[1].lm)
+        .map(([id], i) => [id, i + 1] as const),
+    );
+    const sorted = entries.sort(
+      (a, b) => b[1].tm - a[1].tm || b[1].total - a[1].total,
+    );
+    return sorted.slice(0, 10).map(([id, a], i) => {
+      const meta = metaOf(id);
+      const thisRank = i + 1;
+      const lr = lastRank.get(id) ?? thisRank;
+      return {
+        userId: id,
+        name: meta.name,
+        photo: meta.photo,
+        area: meta.area,
+        thisMonthValue: a.tm,
+        lastMonthValue: a.lm,
+        thisMonthClosed: a.tmClosed,
+        totalValue: a.total,
+        totalClosed: a.totalClosed,
+        totalCommission: a.commission,
+        rankDelta: lr - thisRank,
+      };
+    });
+  };
+
+  return {
+    sectorLeaderboards: SECTORS.map((sector) => ({
+      sector,
+      rows: rank(perSector.get(sector)!),
+    })),
+    overallLeaderboard: rank(overall),
+  };
+}
 
 export async function getAdminOverview(): Promise<AdminOverview> {
   if (LOCAL_DEMO) {
     const agentUsers = demoUsers.filter((u) => u.role === ROLES.AGENT);
-    const closedByAgent = new Map<string, { closed: number; commission: number }>();
-    for (const d of demoDeals) {
-      if (d.deal_status !== "closed") continue;
-      const cur = closedByAgent.get(d.agent_id) ?? { closed: 0, commission: 0 };
-      cur.closed += 1;
-      cur.commission += Number(d.commission_amount) || 0;
-      closedByAgent.set(d.agent_id, cur);
-    }
-    const nameOf = (id: string) =>
-      demoAgents.find((a) => a.user_id === id)?.display_name ?? "Agent";
+    const catById = new Map(demoListings.map((l) => [l.id, l.category]));
+    const profById = new Map(demoAgents.map((a) => [a.user_id, a]));
+    const lb = buildLeaderboards(
+      demoDeals,
+      (lid) => (catById.get(lid) as Sector) ?? null,
+      (id) => {
+        const p = profById.get(id);
+        return {
+          name: p?.display_name || p?.full_name || "Agent",
+          photo: p?.profile_photo_url ?? null,
+          area: p?.service_areas?.[0] ?? null,
+        };
+      },
+    );
     return {
       totalAgents: agentUsers.length,
-      activeAgents: agentUsers.length,
-      agentLeaderboard: [...closedByAgent.entries()]
-        .map(([id, v]) => ({ name: nameOf(id), ...v }))
-        .sort((a, b) => b.commission - a.commission)
-        .slice(0, 8),
+      activeAgents: agentUsers.filter((u) => u.status === "active").length,
+      pendingAgents: agentUsers.filter((u) => u.status === "pending").length,
+      ...lb,
     };
   }
   const supabase = await createClient();
-  const [{ data: users }, { data: profiles }, { data: deals }] =
+  const [{ data: users }, { data: profiles }, { data: deals }, { data: listings }] =
     await Promise.all([
       supabase.from("users").select("id, status, role"),
-      supabase.from("agent_profiles").select("user_id, full_name, display_name"),
-      supabase.from("deals").select("agent_id, deal_status, commission_amount"),
+      supabase
+        .from("agent_profiles")
+        .select("user_id, full_name, display_name, profile_photo_url, service_areas"),
+      supabase.from("deals").select("*"),
+      supabase.from("listings").select("id, category"),
     ]);
 
   const agentUsers = (users ?? []).filter((u) => u.role === "agent");
-  const closedByAgent = new Map<string, { closed: number; commission: number }>();
-  for (const d of deals ?? []) {
-    if (d.deal_status !== "closed") continue;
-    const cur = closedByAgent.get(d.agent_id) ?? { closed: 0, commission: 0 };
-    cur.closed += 1;
-    cur.commission += Number(d.commission_amount) || 0;
-    closedByAgent.set(d.agent_id, cur);
-  }
-
-  const nameOf = (id: string) => {
-    const p = (profiles ?? []).find((x) => x.user_id === id);
-    return p?.display_name || p?.full_name || "Agent";
-  };
-
-  const agentLeaderboard = [...closedByAgent.entries()]
-    .map(([id, v]) => ({ name: nameOf(id), ...v }))
-    .sort((a, b) => b.commission - a.commission)
-    .slice(0, 8);
+  const catById = new Map((listings ?? []).map((l) => [l.id, l.category]));
+  const profById = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+  const lb = buildLeaderboards(
+    (deals ?? []) as DealRow[],
+    (lid) => (catById.get(lid) as Sector) ?? null,
+    (id) => {
+      const p = profById.get(id);
+      return {
+        name: p?.display_name || p?.full_name || "Agent",
+        photo: p?.profile_photo_url ?? null,
+        area: p?.service_areas?.[0] ?? null,
+      };
+    },
+  );
 
   return {
     totalAgents: agentUsers.length,
     activeAgents: agentUsers.filter((u) => u.status === "active").length,
-    agentLeaderboard,
+    pendingAgents: agentUsers.filter((u) => u.status === "pending").length,
+    ...lb,
   };
 }

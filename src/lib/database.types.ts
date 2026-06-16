@@ -13,6 +13,7 @@ import type {
   LeadSource,
   LeadStatus,
   ShareChannel,
+  DealStatus,
 } from "@/lib/constants";
 
 type Timestamps = {
@@ -197,7 +198,7 @@ export type DealRow = {
   customer_name: string | null;
   customer_phone: string | null;
   payment_status: string | null;
-  deal_status: "booked" | "processing" | "closed" | "cancelled";
+  deal_status: DealStatus;
   remarks: string | null;
   is_demo: boolean;
 } & Timestamps;
