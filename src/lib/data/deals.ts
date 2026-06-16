@@ -7,23 +7,27 @@ import { demoGetDeals, demoListingTitleMap } from "@/lib/demo-data/queries";
  * List deals visible to the current user. RLS scopes owner/admin automatically.
  * Returns deals plus a map of listing_id -> listing title.
  */
-export async function getDeals(): Promise<{
+export async function getDeals(
+  scope: { ownerId?: string } = {},
+): Promise<{
   deals: DealRow[];
   listingTitles: Map<string, string>;
 }> {
   if (LOCAL_DEMO) {
     return {
-      deals: demoGetDeals(),
+      deals: demoGetDeals(scope.ownerId),
       listingTitles: new Map(Object.entries(demoListingTitleMap())),
     };
   }
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("deals")
     .select("*")
     .order("closed_date", { ascending: false, nullsFirst: false })
     .order("booking_date", { ascending: false, nullsFirst: false })
     .limit(200);
+  if (scope.ownerId) query = query.eq("agent_id", scope.ownerId);
+  const { data, error } = await query;
 
   const deals = (error ? [] : (data ?? [])) as DealRow[];
 
