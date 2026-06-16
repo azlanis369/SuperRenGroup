@@ -3,7 +3,9 @@
 Private real estate listing CRM + digital business card + shareable property
 catalog + sales intelligence dashboard. Mobile-first, ringan, premium.
 
-**Tagline:** _Manage listings. Share faster. Close smarter._
+**🔗 Live:** https://superren.group · **Tagline:** _Manage listings. Share faster. Close smarter._
+
+> 📈 **Nak guna data sebenar?** Lihat **[PANDUAN-GO-LIVE.md](./PANDUAN-GO-LIVE.md)** — langkah-demi-langkah sambung Supabase (auth + database + storage).
 
 Built with Next.js 15 (App Router) · TypeScript · Tailwind CSS · shadcn-style UI
 · Supabase (Postgres + Auth + Storage) · Recharts · React Hook Form + Zod.
