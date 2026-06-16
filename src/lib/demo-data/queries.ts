@@ -120,12 +120,14 @@ export function demoGetLeads(filters: { status?: string; source?: string } = {})
   return rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-export function demoGetDeals() {
-  return [...demoDeals].sort((a, b) =>
-    (b.closed_date ?? b.booking_date ?? "").localeCompare(
-      a.closed_date ?? a.booking_date ?? "",
-    ),
-  );
+export function demoGetDeals(ownerId?: string) {
+  return demoDeals
+    .filter((d) => !ownerId || d.agent_id === ownerId)
+    .sort((a, b) =>
+      (b.closed_date ?? b.booking_date ?? "").localeCompare(
+        a.closed_date ?? a.booking_date ?? "",
+      ),
+    );
 }
 
 export function demoListingTitleMap(): Record<string, string> {
