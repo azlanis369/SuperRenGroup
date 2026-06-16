@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Phone, Handshake, X } from "lucide-react";
+import { Search, Handshake, X } from "lucide-react";
 import {
   DEAL_STATUSES,
   DEAL_STATUS_LABELS,
@@ -11,8 +11,10 @@ import {
 } from "@/lib/constants";
 import { cn, formatDate, formatPrice } from "@/lib/utils";
 import type { DealRow } from "@/lib/database.types";
+import type { AgentStamp } from "@/lib/share";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FollowUpActions } from "@/components/deals/follow-up-actions";
 
 const DOT: Record<DealStatus, string> = {
   booked: "bg-gold",
@@ -34,9 +36,11 @@ function dealPrice(d: DealRow): number {
 export function DealsBoard({
   deals,
   titles,
+  agent,
 }: {
   deals: DealRow[];
   titles: Record<string, string>;
+  agent?: AgentStamp;
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [type, setType] = useState<TypeFilter>("all");
@@ -195,13 +199,17 @@ export function DealsBoard({
                       </p>
                     ) : null}
                     {deal.customer_phone ? (
-                      <a
-                        href={`tel:${deal.customer_phone}`}
-                        className="flex items-center gap-1.5 text-primary hover:underline"
-                      >
-                        <Phone className="h-3.5 w-3.5" />
-                        {deal.customer_phone}
-                      </a>
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          {deal.customer_phone}
+                        </p>
+                        <FollowUpActions
+                          phone={deal.customer_phone}
+                          customerName={deal.customer_name}
+                          listingTitle={title}
+                          agent={agent}
+                        />
+                      </>
                     ) : null}
                   </div>
                 ) : null}

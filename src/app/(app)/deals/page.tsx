@@ -16,6 +16,14 @@ export default async function DealsPage() {
   const { deals, listingTitles } = await getDeals(
     admin ? {} : { ownerId: user.id },
   );
+  const stamp = user.profile
+    ? {
+        name: user.profile.display_name || user.profile.full_name,
+        phone: user.profile.whatsapp || user.profile.phone,
+        ren: user.profile.ren_number,
+        agency: user.profile.agency_name,
+      }
+    : undefined;
 
   const closed = deals.filter((d) => d.deal_status === "closed");
   const totalCommission = closed.reduce(
@@ -90,6 +98,7 @@ export default async function DealsPage() {
         <DealsBoard
           deals={deals}
           titles={Object.fromEntries(listingTitles)}
+          agent={stamp}
         />
       )}
     </div>
