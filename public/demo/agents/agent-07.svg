@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="Demo agent HZ">
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="Agent HZ">
   <defs>
     <linearGradient id="agrad-7" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="hsl(301, 55%, 42%)"/>
-      <stop offset="1" stop-color="hsl(341, 60%, 28%)"/>
+      <stop offset="0" stop-color="hsl(36, 42%, 38%)"/>
+      <stop offset="1" stop-color="hsl(60, 46%, 22%)"/>
     </linearGradient>
   </defs>
   <rect width="400" height="400" fill="url(#agrad-7)"/>
-  <circle cx="200" cy="200" r="190" fill="rgba(255,255,255,0.06)"/>
-  <circle cx="320" cy="80" r="110" fill="rgba(255,255,255,0.07)"/>
-  <text x="200" y="232" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="150" font-weight="800" fill="#ffffff">HZ</text>
-  <rect x="160" y="330" width="80" height="34" rx="17" fill="rgba(0,0,0,0.30)"/>
-  <text x="200" y="354" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" letter-spacing="2" fill="#ffffff">DEMO</text>
+  <circle cx="200" cy="200" r="190" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="320" cy="80" r="120" fill="rgba(255,255,255,0.06)"/>
+  <text x="200" y="234" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="150" font-weight="800" fill="#ffffff">HZ</text>
 </svg>
