@@ -228,7 +228,22 @@ export default async function PublicListingPage({
                 enableWhatsApp={listing.enable_whatsapp_cta}
               />
             ) : null}
-            <ShareButton listing={listing} variant="outline" size="default" label="Kongsi listing ini" />
+            <ShareButton
+              listing={listing}
+              agent={
+                agent
+                  ? {
+                      name: agent.display_name || agent.full_name,
+                      phone: agent.whatsapp || agent.phone,
+                      ren: agent.ren_number,
+                      agency: agent.agency_name,
+                    }
+                  : undefined
+              }
+              variant="outline"
+              size="default"
+              label="Kongsi listing ini"
+            />
           </div>
         </div>
 

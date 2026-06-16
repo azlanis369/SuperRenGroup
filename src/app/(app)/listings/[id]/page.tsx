@@ -41,11 +41,19 @@ export default async function ListingDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireOnboardedUser();
+  const user = await requireOnboardedUser();
   const { id } = await params;
   const data = await getListingForEdit(id);
   if (!data) notFound();
   const { listing, media } = data;
+  const stamp = user.profile
+    ? {
+        name: user.profile.display_name || user.profile.full_name,
+        phone: user.profile.whatsapp || user.profile.phone,
+        ren: user.profile.ren_number,
+        agency: user.profile.agency_name,
+      }
+    : undefined;
   const isDemo = (listing as { is_demo?: boolean }).is_demo;
   const gallery = media.length
     ? media
@@ -69,7 +77,7 @@ export default async function ListingDetailPage({
               <ExternalLink className="h-4 w-4" /> Awam
             </Link>
           </Button>
-          <ShareButton listing={listing} />
+          <ShareButton listing={listing} agent={stamp} />
           <Button asChild size="sm">
             <Link href={`/listings/${listing.id}/edit`}>
               <Pencil className="h-4 w-4" /> Edit

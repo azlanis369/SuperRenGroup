@@ -6,6 +6,7 @@ import {
   buildWhatsAppShareUrl,
   buildTelegramShareUrl,
   buildShareMessage,
+  type AgentStamp,
 } from "@/lib/share";
 import { absoluteUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,11 +42,13 @@ async function trackShare(listingId: string, channel: string) {
 
 export function ShareButton({
   listing,
+  agent,
   variant = "outline",
   size = "sm",
   label,
 }: {
   listing: ShareListing;
+  agent?: AgentStamp;
   variant?: "outline" | "default" | "ghost" | "gold";
   size?: "sm" | "default" | "icon-sm";
   label?: string;
@@ -63,7 +66,7 @@ export function ShareButton({
   }
 
   async function copyMessage() {
-    await navigator.clipboard.writeText(buildShareMessage(listing));
+    await navigator.clipboard.writeText(buildShareMessage(listing, agent));
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
@@ -88,7 +91,7 @@ export function ShareButton({
             onClick={() => trackShare(listing.id, "whatsapp")}
           >
             <a
-              href={buildWhatsAppShareUrl(listing)}
+              href={buildWhatsAppShareUrl(listing, agent)}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -102,7 +105,7 @@ export function ShareButton({
             onClick={() => trackShare(listing.id, "telegram")}
           >
             <a
-              href={buildTelegramShareUrl(listing)}
+              href={buildTelegramShareUrl(listing, agent)}
               target="_blank"
               rel="noopener noreferrer"
             >

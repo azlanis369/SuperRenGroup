@@ -24,6 +24,15 @@ export default async function ListingsPage({
     { ownerOnly: !admin, ownerId: user.id },
   );
 
+  const stamp = user.profile
+    ? {
+        name: user.profile.display_name || user.profile.full_name,
+        phone: user.profile.whatsapp || user.profile.phone,
+        ren: user.profile.ren_number,
+        agency: user.profile.agency_name,
+      }
+    : undefined;
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -59,7 +68,12 @@ export default async function ListingsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {listings.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} index={i + 1} />
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              index={i + 1}
+              agent={stamp}
+            />
           ))}
         </div>
       )}
