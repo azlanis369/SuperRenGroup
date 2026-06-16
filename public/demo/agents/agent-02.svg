@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="Agent NA">
+  <defs>
+    <linearGradient id="agrad-2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(256, 42%, 38%)"/>
+      <stop offset="1" stop-color="hsl(280, 46%, 22%)"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#agrad-2)"/>
+  <circle cx="200" cy="200" r="190" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="320" cy="80" r="120" fill="rgba(255,255,255,0.06)"/>
+  <text x="200" y="234" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="150" font-weight="800" fill="#ffffff">NA</text>
+</svg>
