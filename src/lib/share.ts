@@ -92,3 +92,17 @@ export function buildTelegramShareUrl(l: ShareListing, agent?: AgentStamp): stri
 export function buildProfileShareUrl(slug: string): string {
   return absoluteUrl(`/agent/${slug}`);
 }
+
+/** A short, polite follow-up message an agent sends to a customer/lead. */
+export function buildFollowUpMessage(
+  customerName?: string | null,
+  listingTitle?: string | null,
+  agent?: AgentStamp,
+): string {
+  const hi = customerName ? `Hi ${customerName},` : "Hi,";
+  const who = agent?.name
+    ? ` Saya ${agent.name}${agent.agency ? ` dari ${agent.agency}` : ""}.`
+    : "";
+  const re = listingTitle ? ` berkenaan "${listingTitle}"` : "";
+  return `${hi}${who} Saya ingin follow up${re}. Masih berminat? Boleh saya bantu untuk langkah seterusnya? 😊`;
+}

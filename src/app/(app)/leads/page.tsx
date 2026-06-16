@@ -17,6 +17,7 @@ import { DemoBadge } from "@/components/demo-badge";
 import { NewLeadButton } from "@/components/leads/new-lead-button";
 import { LeadStatusSelect } from "@/components/leads/lead-status-select";
 import { LeadFilterPills } from "@/components/leads/lead-filter-pills";
+import { FollowUpActions } from "@/components/deals/follow-up-actions";
 import {
   LEAD_STATUS_LABELS,
   LEAD_STATUS_TONE,
@@ -30,7 +31,15 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ status?: string; source?: string }>;
 }) {
-  await requireOnboardedUser();
+  const user = await requireOnboardedUser();
+  const stamp = user.profile
+    ? {
+        name: user.profile.display_name || user.profile.full_name,
+        phone: user.profile.whatsapp || user.profile.phone,
+        ren: user.profile.ren_number,
+        agency: user.profile.agency_name,
+      }
+    : undefined;
   const sp = await searchParams;
 
   const status =
@@ -166,6 +175,19 @@ export default async function LeadsPage({
                   >
                     {listingTitles.get(lead.listing_id)}
                   </Link>
+                ) : null}
+
+                {lead.phone ? (
+                  <FollowUpActions
+                    phone={lead.phone}
+                    customerName={lead.name}
+                    listingTitle={
+                      lead.listing_id
+                        ? listingTitles.get(lead.listing_id)
+                        : null
+                    }
+                    agent={stamp}
+                  />
                 ) : null}
 
                 <div className="mt-3 border-t border-border pt-3">
