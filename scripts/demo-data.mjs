@@ -7,7 +7,7 @@
 
 export const DEMO_EMAIL_DOMAIN = "superren.demo";
 export const DEMO_PASSWORD = "DemoPass123!";
-export const DEMO_AGENCY = "Super Ren Realty Demo";
+export const DEMO_AGENCY = "Chester Properties Sdn Bhd";
 
 // --- Privileged accounts ----------------------------------------------------
 export const SUPER_ADMIN = {

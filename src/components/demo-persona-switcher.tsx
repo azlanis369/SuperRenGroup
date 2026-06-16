@@ -13,6 +13,11 @@ const AGENTS = [
   { id: "user-harith", name: "Harith Z." },
 ];
 
+const PRIMARY = [
+  { id: "user-azlan", name: "Azlan Zakaria", role: "Ejen utama" },
+  { id: "user-admin", name: "Nasyriq", role: "Group Manager" },
+];
+
 async function setPersona(role: string) {
   await fetch("/api/demo/persona", {
     method: "POST",
@@ -38,18 +43,27 @@ export function DemoPersonaSwitcher() {
         Masuk demo sebagai:
       </p>
       <div className="grid grid-cols-2 gap-2">
-        <Button onClick={() => enter("user-admin")} disabled={!!loading}>
-          {loading === "user-admin" ? <Spinner /> : <ShieldCheck className="h-4 w-4" />}
-          Admin
-        </Button>
-        <Button
-          variant="gold"
-          onClick={() => enter("user-superadmin")}
-          disabled={!!loading}
-        >
-          {loading === "user-superadmin" ? <Spinner /> : <ShieldCheck className="h-4 w-4" />}
-          Super Admin
-        </Button>
+        {PRIMARY.map((p, i) => (
+          <Button
+            key={p.id}
+            variant={i === 0 ? "gold" : "default"}
+            onClick={() => enter(p.id)}
+            disabled={!!loading}
+            className="h-auto flex-col gap-0.5 py-2.5"
+          >
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              {loading === p.id ? (
+                <Spinner />
+              ) : i === 0 ? (
+                <UserRound className="h-4 w-4" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              {p.name}
+            </span>
+            <span className="text-[10px] font-normal opacity-80">{p.role}</span>
+          </Button>
+        ))}
       </div>
       <div className="grid grid-cols-2 gap-2">
         {AGENTS.map((a) => (
@@ -65,6 +79,14 @@ export function DemoPersonaSwitcher() {
           </Button>
         ))}
       </div>
+      <button
+        type="button"
+        onClick={() => enter("user-superadmin")}
+        disabled={!!loading}
+        className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+      >
+        Masuk sebagai Super Admin
+      </button>
     </div>
   );
 }

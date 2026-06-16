@@ -23,17 +23,17 @@ function adminProfile(user: UserRow): AgentProfileRow {
   return {
     id: `profile-${user.id}`,
     user_id: user.id,
-    full_name: isSuper ? "Super Admin" : "Group Admin",
-    display_name: isSuper ? "Super Admin" : "Group Admin",
-    slug: isSuper ? "super-admin" : "group-admin",
+    full_name: isSuper ? "Super Admin" : "Nasyriq",
+    display_name: isSuper ? "Super Admin" : "Nasyriq",
+    slug: isSuper ? "super-admin" : "nasyriq",
     profile_photo_url: null,
     ren_number: null,
-    agency_name: "Super Ren Realty Demo",
-    title: isSuper ? "Super Admin" : "Team Leader",
+    agency_name: "Chester Properties Sdn Bhd",
+    title: isSuper ? "Super Admin" : "Group Manager",
     phone: "+60 12-000 0000",
     whatsapp: "+60120000000",
     email: user.email,
-    bio: "Akaun pentadbir demo.",
+    bio: isSuper ? "Akaun pentadbir demo." : "Pengurus Super Ren Group — Chester Properties HQ.",
     service_areas: [],
     specialization: [],
     facebook_url: null,
@@ -56,8 +56,8 @@ async function demoSessionUser(): Promise<SessionUser> {
   const user =
     demoUsers.find((u) => u.id === want) ??
     (want === "agent"
-      ? demoUsers.find((u) => u.role === ROLES.AGENT)!
-      : demoUsers.find((u) => u.id === "user-admin")!);
+      ? demoUsers.find((u) => u.id === "user-azlan")!
+      : demoUsers.find((u) => u.id === "user-azlan")!);
   const profile =
     demoAgents.find((a) => a.user_id === user.id) ?? adminProfile(user);
   return {

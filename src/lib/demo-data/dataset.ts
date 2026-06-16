@@ -56,6 +56,20 @@ type AgentSeed = {
   bio: string;
 };
 
+// The agency every Super Ren Group agent operates under.
+const AGENCY_NAME = "Chester Properties Sdn Bhd";
+
+// Azlan is the primary persona (the app owner). His profile carries real
+// contact details and he owns the one genuine listing in the dataset.
+const AZLAN_SEED: AgentSeed = {
+  key: "azlan",
+  name: "Azlan Zakaria",
+  ren: "REN 09876",
+  areas: ["Ampang", "Kuala Lumpur", "KLCC", "Hulu Klang"],
+  spec: ["subsale", "commercial", "project"],
+  bio: "Ejen hartanah komersial & kediaman di Ampang dan sekitar Kuala Lumpur. Chester Properties HQ — Super Ren Group.",
+};
+
 const AGENT_SEEDS: AgentSeed[] = [
   { key: "aiman", name: "Aiman Hakimi", ren: "REN 12345", areas: ["KLCC", "KL City"], spec: ["subsale", "rental"], bio: "Pakar hartanah mewah di sekitar KLCC & pusat bandar KL." },
   { key: "aisyah", name: "Nur Aisyah Rahman", ren: "REN 23456", areas: ["Bangi", "Kajang", "Semenyih"], spec: ["project"], bio: "Fokus projek baharu di koridor selatan Selangor." },
@@ -69,7 +83,8 @@ const AGENT_SEEDS: AgentSeed[] = [
 
 export const demoUsers: UserRow[] = [
   { id: "user-superadmin", email: "superadmin@superren.demo", role: "super_admin", status: "active", created_at: NOW, last_login_at: NOW },
-  { id: "user-admin", email: "admin@superren.demo", role: "admin", status: "active", created_at: NOW, last_login_at: NOW },
+  { id: "user-admin", email: "nasyriq@superren.demo", role: "admin", status: "active", created_at: NOW, last_login_at: NOW },
+  { id: "user-azlan", email: "azlan@superren.demo", role: "agent", status: "active", created_at: NOW, last_login_at: NOW },
   ...AGENT_SEEDS.map((a, i) => ({
     id: `user-${a.key}`,
     email: `${a.key}@superren.demo`,
@@ -80,33 +95,65 @@ export const demoUsers: UserRow[] = [
   })),
 ];
 
-export const demoAgents: AgentProfileRow[] = AGENT_SEEDS.map((a, i) => ({
-  id: `profile-${a.key}`,
-  user_id: `user-${a.key}`,
-  full_name: a.name,
-  display_name: a.name,
-  slug: slugify(a.name),
-  profile_photo_url: `/demo/agents/agent-${String(i + 1).padStart(2, "0")}.svg`,
-  ren_number: a.ren,
-  agency_name: "Super Ren Realty Demo",
-  title: i % 2 === 0 ? "Senior Negotiator" : "Real Estate Negotiator",
-  phone: `+60 12-${between(300, 999)} ${between(1000, 9999)}`,
-  whatsapp: `+6012${between(3000000, 9999999)}`,
-  email: `${a.key}@superren.demo`,
-  bio: a.bio,
-  service_areas: a.areas,
-  specialization: a.spec,
-  facebook_url: `https://facebook.com/${a.key}.superren`,
-  instagram_url: `https://instagram.com/${a.key}.superren`,
+/** Azlan's profile — the primary agent, with real contact details. */
+export const azlanProfile: AgentProfileRow = {
+  id: "profile-azlan",
+  user_id: "user-azlan",
+  full_name: AZLAN_SEED.name,
+  display_name: "Azlan Zakaria",
+  slug: "azlan-zakaria",
+  profile_photo_url: "/demo/agents/agent-azlan.svg",
+  ren_number: AZLAN_SEED.ren,
+  agency_name: AGENCY_NAME,
+  title: "Real Estate Negotiator",
+  phone: "+60 17-690 0696",
+  whatsapp: "+60176900696",
+  email: "azlan@superren.demo",
+  bio: AZLAN_SEED.bio,
+  service_areas: AZLAN_SEED.areas,
+  specialization: AZLAN_SEED.spec,
+  facebook_url: "https://facebook.com/azlan.ibnuzakaria",
+  instagram_url: null,
   tiktok_url: null,
   website_url: null,
-  telegram_username: `@${a.key}_superren`,
+  telegram_username: null,
   qr_code_url: null,
   is_profile_public: true,
-  is_demo: true,
+  is_demo: false,
   created_at: NOW,
   updated_at: NOW,
-}));
+};
+
+export const demoAgents: AgentProfileRow[] = [
+  azlanProfile,
+  ...AGENT_SEEDS.map((a, i) => ({
+    id: `profile-${a.key}`,
+    user_id: `user-${a.key}`,
+    full_name: a.name,
+    display_name: a.name,
+    slug: slugify(a.name),
+    profile_photo_url: `/demo/agents/agent-${String(i + 1).padStart(2, "0")}.svg`,
+    ren_number: a.ren,
+    agency_name: AGENCY_NAME,
+    title: i % 2 === 0 ? "Senior Negotiator" : "Real Estate Negotiator",
+    phone: `+60 12-${between(300, 999)} ${between(1000, 9999)}`,
+    whatsapp: `+6012${between(3000000, 9999999)}`,
+    email: `${a.key}@superren.demo`,
+    bio: a.bio,
+    service_areas: a.areas,
+    specialization: a.spec,
+    facebook_url: `https://facebook.com/${a.key}.superren`,
+    instagram_url: `https://instagram.com/${a.key}.superren`,
+    tiktok_url: null,
+    website_url: null,
+    telegram_username: `@${a.key}_superren`,
+    qr_code_url: null,
+    is_profile_public: true,
+    is_demo: true,
+    created_at: NOW,
+    updated_at: NOW,
+  })),
+];
 
 // ---------------------------------------------------------------------------
 // Listing generation, tuned per analytics scenario
@@ -190,6 +237,12 @@ const SPECS: Spec[] = [
   T("DEMO: Office Unit for Rent, Petaling Jaya", "rental", "Petaling Jaya", "daniel", "general", "office", 4500),
   T("DEMO: Shoplot Rental, Klang", "rental", "Klang", "siti", "general", "shop", 3800),
   T("DEMO: Cozy Apartment, Wangsa Maju", "rental", "Wangsa Maju", "faris", "low_media", "apartment", 1400),
+
+  // ---- Azlan (primary persona) — demo listings to populate his dashboard ----
+  T("DEMO: Condo Mewah, Ampang Hilir", "subsale", "Ampang", "azlan", "strength_subsale", "condo", 1180000),
+  T("DEMO: Double Storey Terrace, Taman Kosas Ampang", "subsale", "Ampang", "azlan", "general", "terrace", 880000),
+  T("DEMO: Serviced Residence for Rent, Ampang", "rental", "Ampang", "azlan", "fast_rental", "condo", 2800),
+  T("DEMO: Office Suite, KL Eco City", "subsale", "Kuala Lumpur", "azlan", "general", "office", 1650000),
 ];
 
 const FACILITIES = ["Swimming Pool", "Gym", "24h Security", "Playground", "Surau", "BBQ Area", "Sauna", "Multipurpose Hall"];
@@ -342,6 +395,95 @@ SPECS.forEach((spec, idx) => {
     };
   }
 });
+
+// ---------------------------------------------------------------------------
+// Real listing (not demo) — supplied by Azlan. Mixed in with demo data so the
+// group recognises genuine inventory alongside sample listings.
+// ---------------------------------------------------------------------------
+{
+  const id = "listing-excella-ampang";
+  const createdAt = daysAgoISO(18);
+  const real: ListingRow = {
+    id,
+    agent_id: "user-azlan",
+    category: "subsale",
+    title: "Shoplot 3.5 Tingkat, Excella Business Park, Ampang",
+    slug: "shoplot-excella-business-park-ampang",
+    property_type: "shop",
+    area: "Ampang",
+    address_private: "Excella Business Park, Jalan Ampang, 68000 Ampang, Selangor",
+    address_public: "Excella Business Park, Jalan Ampang, Ampang",
+    show_exact_address: true,
+    map_url: "https://maps.google.com/?q=Excella+Business+Park+Ampang",
+    price: 5150000,
+    price_display: "RM 5,150,000",
+    tenure: "leasehold",
+    built_up_sqft: 14900,
+    land_area_sqft: 3480,
+    bedrooms: null,
+    bathrooms: 6,
+    carparks: 6,
+    furnishing: "unfurnished",
+    description:
+      "Shoplot pejabat 3.5 tingkat di Excella Business Park, Ampang. Keluasan bangunan ±14,900 kaki persegi, keluasan tanah ±3,480 kaki persegi. Sesuai untuk HQ korporat, klinik, pusat latihan atau pelaburan komersial. Lokasi strategik dengan akses mudah ke Jalan Ampang, MRT & lebuh raya utama. Pegangan pajakan (leasehold). Disenaraikan oleh Chester Properties HQ — Super Ren Group.",
+    top_selling_points: [
+      "3.5 tingkat — ±14,900 kp keluasan bangunan",
+      "Tanah ±3,480 kp",
+      "Lokasi komersial premium, Jalan Ampang",
+      "Sesuai HQ korporat / klinik / pusat latihan",
+      "Akses mudah MRT & lebuh raya",
+    ],
+    facilities: ["Parking", "Lift", "24h Security", "Backup Genset"],
+    amenities: ["Bank", "Restoran", "Hospital", "Shopping Mall"],
+    nearby: ["Jalan Ampang", "MRT berhampiran", "AEON Ampang"],
+    tags: ["commercial", "hot"],
+    status: "available",
+    visibility: "public",
+    featured: true,
+    show_agent_phone: true,
+    enable_whatsapp_cta: true,
+    enable_telegram_share: true,
+    hero_image_url: "/demo/properties/subsale-01.svg",
+    internal_notes: "Listing sebenar Chester HQ. Co-broke dialu-alukan.",
+    views_count: 96,
+    shares_count: 14,
+    leads_count: 0,
+    is_demo: false,
+    deleted_at: null,
+    created_at: createdAt,
+    updated_at: createdAt,
+    published_at: createdAt,
+  };
+  demoListings.push(real);
+  demoMedia[id] = [
+    {
+      id: `${id}-media-0`,
+      listing_id: id,
+      media_type: "image",
+      url: "/demo/properties/subsale-01.svg",
+      thumbnail_url: null,
+      caption: "Excella Business Park, Ampang",
+      sort_order: 0,
+      file_size: 320000,
+      is_demo: false,
+      created_at: createdAt,
+    },
+  ];
+  demoSubsaleDetails[id] = {
+    id: `${id}-sd`,
+    listing_id: id,
+    asking_price: 5150000,
+    valuation_estimate: 5000000,
+    occupancy_status: "Vacant",
+    maintenance_fee: 0,
+    renovation_info: "Bare unit / original condition",
+    facing_direction: "North",
+    title_type: "Strata",
+    viewing_availability: "Dengan temujanji",
+    co_broke_allowed: true,
+    private_commission_notes: "Co-broke 50/50. Hubungi Azlan untuk butiran.",
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Leads (~130)

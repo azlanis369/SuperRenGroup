@@ -192,7 +192,7 @@ export function ProfileForm({
           <Input {...register("ren_number")} placeholder="REN 12345" />
         </Field>
         <Field label="Nama agensi" error={errors.agency_name?.message}>
-          <Input {...register("agency_name")} placeholder="Super Ren Realty" />
+          <Input {...register("agency_name")} placeholder="Chester Properties Sdn Bhd" />
         </Field>
         <Field label="Jawatan" error={errors.title?.message}>
           <Input {...register("title")} placeholder="Senior Negotiator" />
