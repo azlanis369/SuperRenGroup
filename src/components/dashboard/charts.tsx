@@ -83,6 +83,43 @@ export function SimpleBarChart({
   );
 }
 
+function compactRM(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return String(v);
+}
+
+/** Monthly sales value (RM) bar chart. */
+export function MoneyBarChart({
+  data,
+  color = GOLD,
+}: {
+  data: { month: string; value: number }[];
+  color?: string;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 20% 92%)" vertical={false} />
+        <XAxis dataKey="month" tick={AXIS} tickLine={false} axisLine={false} />
+        <YAxis
+          tick={AXIS}
+          tickLine={false}
+          axisLine={false}
+          width={48}
+          tickFormatter={(v: number) => `RM${compactRM(v)}`}
+        />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          cursor={{ fill: "hsl(215 20% 95%)" }}
+          formatter={(v: number) => [`RM ${v.toLocaleString()}`, "Nilai jualan"]}
+        />
+        <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} maxBarSize={48} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 /** Horizontal conversion funnel using proportional bars. */
 export function Funnel({ data }: { data: { stage: string; count: number }[] }) {
   const max = Math.max(...data.map((d) => d.count), 1);

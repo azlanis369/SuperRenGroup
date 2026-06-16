@@ -129,6 +129,50 @@ export const LISTING_STATUS_TONE: Record<
 /** Statuses that count as a closed (won) deal. */
 export const CLOSED_STATUSES: ListingStatus[] = ["sold", "rented"];
 
+// Deal pipeline statuses (sales intelligence).
+export const DEAL_STATUSES = [
+  "booked",
+  "pending",
+  "closed",
+  "cancelled",
+  "refund",
+  "others",
+] as const;
+export type DealStatus = (typeof DEAL_STATUSES)[number];
+
+export const DEAL_STATUS_LABELS: Record<DealStatus, string> = {
+  booked: "Booking",
+  pending: "Pending",
+  closed: "Closed",
+  cancelled: "Cancelled",
+  refund: "Refund",
+  others: "Lain-lain",
+};
+
+export const DEAL_STATUS_TONE: Record<
+  DealStatus,
+  "neutral" | "info" | "warning" | "success" | "danger" | "gold"
+> = {
+  booked: "gold",
+  pending: "warning",
+  closed: "success",
+  cancelled: "danger",
+  refund: "info",
+  others: "neutral",
+};
+
+/** Deal statuses still moving through the pipeline (not yet won/lost). */
+export const OPEN_DEAL_STATUSES: DealStatus[] = ["booked", "pending"];
+
+/** The three sales sectors used across analytics & leaderboards. */
+export const SECTORS = ["subsale", "rental", "project"] as const;
+export type Sector = (typeof SECTORS)[number];
+export const SECTOR_LABELS: Record<Sector, string> = {
+  subsale: "Subsale",
+  rental: "Rental",
+  project: "Project",
+};
+
 export const VISIBILITIES = ["private", "public", "team"] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
 
