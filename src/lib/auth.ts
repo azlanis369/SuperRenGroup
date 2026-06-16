@@ -28,7 +28,7 @@ function adminProfile(user: UserRow): AgentProfileRow {
     slug: isSuper ? "super-admin" : "nasyriq",
     profile_photo_url: null,
     ren_number: null,
-    agency_name: "Chester Properties Sdn Bhd",
+    agency_name: "Chester Properties HQ",
     title: isSuper ? "Super Admin" : "Group Manager",
     phone: "+60 12-000 0000",
     whatsapp: "+60120000000",

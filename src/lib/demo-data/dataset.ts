@@ -291,7 +291,7 @@ export const demoUsers: UserRow[] = [
   })),
 ];
 
-const AGENCY_NAME = "Chester Properties Sdn Bhd";
+const AGENCY_NAME = "Chester Properties HQ";
 const TITLES = ["Real Estate Negotiator", "Senior Negotiator", "Property Consultant", "Sales Advisor"];
 
 /** Azlan's profile — the primary agent, with real contact details. */
