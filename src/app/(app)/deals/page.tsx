@@ -10,8 +10,7 @@ import {
 import { requireOnboardedUser } from "@/lib/auth";
 import { getDeals } from "@/lib/data/deals";
 import { formatDate, formatPrice } from "@/lib/utils";
-import type { DealRow } from "@/lib/database.types";
-import type { BadgeProps } from "@/components/ui/badge";
+import { DEAL_STATUS_LABELS, DEAL_STATUS_TONE } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -19,23 +18,6 @@ import { EmptyState } from "@/components/empty-state";
 import { DemoBadge } from "@/components/demo-badge";
 
 export const metadata: Metadata = { title: "Deals" };
-
-const DEAL_STATUS_LABELS: Record<DealRow["deal_status"], string> = {
-  booked: "Booked",
-  processing: "Processing",
-  closed: "Closed",
-  cancelled: "Cancelled",
-};
-
-const DEAL_STATUS_TONE: Record<
-  DealRow["deal_status"],
-  NonNullable<BadgeProps["tone"]>
-> = {
-  booked: "gold",
-  processing: "warning",
-  closed: "success",
-  cancelled: "danger",
-};
 
 export default async function DealsPage() {
   await requireOnboardedUser();

@@ -1,6 +1,8 @@
 // Deterministic in-memory demo dataset shaped exactly like the DB Row types,
 // so the same components/queries work without any database. Built once at
-// module load. Numbers are tuned so the dashboard & SWOT look meaningful.
+// module load. Tuned to simulate ~6 months of real estate sales activity for
+// a 50-agent group (30 active) across Kuala Lumpur & Selangor, so dashboards,
+// SWOT and the agent leaderboard look meaningful.
 
 import type {
   AgentProfileRow,
@@ -20,6 +22,7 @@ import {
   type LeadStatus,
   type LeadSource,
   type PropertyType,
+  type DealStatus,
   LEAD_SOURCES,
 } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
@@ -35,83 +38,227 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const rnd = mulberry32(20260615);
-const pick = <T>(arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
+const rnd = mulberry32(20260616);
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)];
 const between = (a: number, b: number) => a + Math.floor(rnd() * (b - a + 1));
+const chance = (p: number) => rnd() < p;
+
+const NOW = new Date();
+const NOW_ISO = NOW.toISOString();
 const daysAgoISO = (d: number) =>
-  new Date(Date.now() - d * 86400000).toISOString();
+  new Date(NOW.getTime() - d * 86400000).toISOString();
 const dateOnly = (iso: string) => iso.slice(0, 10);
 
-const NOW = new Date().toISOString();
+/** Random calendar date within `offset` months ago (0 = current month to date). */
+function dateInMonth(offset: number): Date {
+  const base = new Date(NOW.getFullYear(), NOW.getMonth() - offset, 1);
+  const maxDay =
+    offset === 0
+      ? NOW.getDate()
+      : new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+  return new Date(base.getFullYear(), base.getMonth(), 1 + Math.floor(rnd() * maxDay));
+}
 
 // ---------------------------------------------------------------------------
-// Agents
+// Areas (KL / Selangor) grouped by price tier
 // ---------------------------------------------------------------------------
-type AgentSeed = {
-  key: string;
-  name: string;
-  ren: string;
-  areas: string[];
-  spec: string[];
-  bio: string;
+const AREA_TIER: Record<string, "premium" | "mid" | "value"> = {
+  KLCC: "premium", "Mont Kiara": "premium", Bangsar: "premium",
+  Damansara: "premium", "Ampang Hilir": "premium", "Desa ParkCity": "premium",
+  Ampang: "mid", "Pandan Indah": "mid", "Pandan Jaya": "mid", "Hulu Klang": "mid",
+  Cheras: "mid", "Petaling Jaya": "mid", "Subang Jaya": "mid", "Bukit Jalil": "mid",
+  Cyberjaya: "mid", Putrajaya: "mid", Setiawangsa: "mid", "Kuala Lumpur": "mid",
+  Setapak: "value", "Wangsa Maju": "value", Keramat: "value", Gombak: "value",
+  "Shah Alam": "value", Klang: "value", Puchong: "value", "Seri Kembangan": "value",
+  Kajang: "value", Bangi: "value", Semenyih: "value", Rawang: "value",
+  Kepong: "value", Selayang: "value", "Sungai Buloh": "value",
+};
+const ALL_AREAS = Object.keys(AREA_TIER);
+const AZLAN_AREAS = ["Ampang", "Pandan Indah", "Pandan Jaya", "Ampang Hilir", "Hulu Klang"];
+
+const PRICE_RANGE = {
+  premium: { subsale: [1_200_000, 3_500_000], rental: [3_500, 9_000], project: [800_000, 1_800_000] },
+  mid: { subsale: [600_000, 1_400_000], rental: [1_800, 4_200], project: [450_000, 950_000] },
+  value: { subsale: [350_000, 780_000], rental: [1_000, 2_200], project: [300_000, 560_000] },
+} as const;
+
+const PROP_TYPES: Record<ListingCategory, PropertyType[]> = {
+  subsale: ["terrace", "semi_d", "bungalow", "condo", "apartment", "shop"],
+  rental: ["condo", "apartment", "terrace", "office", "shop"],
+  project: ["condo", "apartment"],
 };
 
-// The agency every Super Ren Group agent operates under.
-const AGENCY_NAME = "Chester Properties Sdn Bhd";
-
-// Azlan is the primary persona (the app owner). His profile carries real
-// contact details and he owns the one genuine listing in the dataset.
-const AZLAN_SEED: AgentSeed = {
-  key: "azlan",
-  name: "Azlan Zakaria",
-  ren: "REN 09876",
-  areas: ["Ampang", "Kuala Lumpur", "KLCC", "Hulu Klang"],
-  spec: ["subsale", "commercial", "project"],
-  bio: "Ejen hartanah komersial & kediaman di Ampang dan sekitar Kuala Lumpur. Chester Properties HQ — Super Ren Group.",
-};
-
-const AGENT_SEEDS: AgentSeed[] = [
-  { key: "aiman", name: "Aiman Hakimi", ren: "REN 12345", areas: ["KLCC", "KL City"], spec: ["subsale", "rental"], bio: "Pakar hartanah mewah di sekitar KLCC & pusat bandar KL." },
-  { key: "aisyah", name: "Nur Aisyah Rahman", ren: "REN 23456", areas: ["Bangi", "Kajang", "Semenyih"], spec: ["project"], bio: "Fokus projek baharu di koridor selatan Selangor." },
-  { key: "daniel", name: "Daniel Lim", ren: "REN 34567", areas: ["Petaling Jaya", "Subang Jaya"], spec: ["subsale", "rental"], bio: "Negotiator aktif di PJ & Subang dengan rekod tutup pantas." },
-  { key: "siti", name: "Siti Hajar Osman", ren: "REN 45678", areas: ["Shah Alam", "Klang"], spec: ["subsale"], bio: "Pakar rumah teres & landed di Shah Alam dan Klang." },
-  { key: "faris", name: "Faris Iskandar", ren: "REN 56789", areas: ["Setapak", "Wangsa Maju", "Gombak"], spec: ["subsale", "rental"], bio: "Khidmat mesra untuk kawasan utara KL." },
-  { key: "michelle", name: "Michelle Tan", ren: "REN 67890", areas: ["Mont Kiara", "Desa ParkCity", "Kepong"], spec: ["rental", "subsale"], bio: "Hartanah premium & sewaan eksklusif di Mont Kiara." },
-  { key: "harith", name: "Harith Zulkifli", ren: "REN 78901", areas: ["Cyberjaya", "Putrajaya", "Dengkil"], spec: ["rental", "project"], bio: "Spesialis sewaan pelajar & profesional di Cyberjaya." },
-  { key: "kavitha", name: "Kavitha Raj", ren: "REN 89012", areas: ["Puchong", "Seri Kembangan", "Bukit Jalil"], spec: ["subsale", "project"], bio: "Membantu keluarga cari rumah idaman di selatan Klang Valley." },
+const PROJECT_NAMES = [
+  "Aurora", "Lumina", "Vista", "Emerald", "Zenith", "Solaris", "Tropika", "Saffron",
+  "Mirage", "Verde", "Iris", "Cendana", "Seroja", "Bayu", "Mutiara", "Suria",
+];
+const SUBSALE_TITLES = [
+  "2-Storey Terrace", "Corner Lot Terrace", "Renovated Semi-D", "Spacious Bungalow",
+  "Freehold Condo", "High-Floor Apartment", "Endlot Terrace", "Cluster Home",
+  "Shop Office", "Townhouse",
+];
+const RENTAL_TITLES = [
+  "Furnished Condo for Rent", "Serviced Suite for Rent", "Cozy Apartment for Rent",
+  "Terrace House for Rent", "Office Lot for Rent", "Shoplot for Rent",
+  "Studio for Rent", "Family Home for Rent",
 ];
 
+const FACILITIES = ["Swimming Pool", "Gym", "24h Security", "Playground", "Surau", "BBQ Area", "Sauna", "Multipurpose Hall", "Covered Parking"];
+const AMENITIES = ["Shopping Mall", "School", "Hospital", "Bank", "Restoran", "Pasar", "MRT/LRT"];
+const SELLING = ["Lokasi strategik", "Hampir pengangkutan awam", "Kawasan selamat 24 jam", "Harga bawah pasaran", "Pemandangan menarik", "Sesuai untuk keluarga", "Pulangan sewa tinggi", "Senang dapat penyewa", "Sudah diubahsuai"];
+
+// ---------------------------------------------------------------------------
+// Names (multi-ethnic, Malaysian)
+// ---------------------------------------------------------------------------
+const MALAY_FIRST = ["Ahmad", "Muhammad", "Aiman", "Faris", "Hafiz", "Iskandar", "Syafiq", "Amir", "Khairul", "Izzat", "Danial", "Hakim", "Zulkifli", "Aqil", "Haziq", "Nurul", "Siti", "Aisyah", "Farah", "Hana", "Liyana", "Aqilah", "Najwa", "Sofea", "Alia"];
+const MALAY_LAST = ["Abdullah", "Ismail", "Rahman", "Osman", "Yusof", "Zainal", "Hamid", "Bakar", "Razak", "Karim", "Salleh", "Idris"];
+const CHINESE_LAST = ["Lim", "Tan", "Wong", "Lee", "Ong", "Goh", "Chan", "Ng", "Teh", "Yap", "Chong", "Khoo"];
+const CHINESE_GIVEN = ["Wei Jie", "Ming Hui", "Jia Xin", "Mei Ling", "Kai Wen", "Yong Sheng", "Li Ying", "Jun Hao", "Xin Yi", "Zhi Hao", "Hui Min", "Cheng"];
+const INDIAN_FIRST = ["Suresh", "Anand", "Vijay", "Arjun", "Priya", "Maya", "Kavitha", "Deepak", "Ramesh", "Divya", "Karthik", "Shanti"];
+const INDIAN_LAST = ["Subramaniam", "Pillai", "Nair", "Menon", "Krishnan", "Raj", "Kumar", "Devan"];
+
+function randomName(): string {
+  const e = rnd();
+  if (e < 0.55) return `${pick(MALAY_FIRST)} ${pick(MALAY_LAST)}`;
+  if (e < 0.82) return `${pick(CHINESE_LAST)} ${pick(CHINESE_GIVEN)}`;
+  return `${pick(INDIAN_FIRST)} ${pick(INDIAN_LAST)}`;
+}
+
+const LEAD_FIRST = [...MALAY_FIRST, ...INDIAN_FIRST, "Wong", "Tan", "Lim", "Lee"];
+
+// ---------------------------------------------------------------------------
+// Agent roster: 50 agents (Azlan + 8 named + 41 generated). 30 active.
+// ---------------------------------------------------------------------------
+type Tier = "top" | "mid" | "low";
+type Agent = {
+  key: string;
+  userId: string;
+  name: string;
+  status: "active" | "pending" | "deactivated";
+  tier: Tier;
+  area: string; // home base area
+  sectors: ListingCategory[]; // sectors they work
+  ren: string;
+  photo: string;
+};
+
+const NAMED = [
+  { key: "aiman", name: "Aiman Hakimi", area: "KLCC" },
+  { key: "aisyah", name: "Nur Aisyah Rahman", area: "Kajang" },
+  { key: "daniel", name: "Daniel Lim", area: "Petaling Jaya" },
+  { key: "siti", name: "Siti Hajar Osman", area: "Shah Alam" },
+  { key: "faris", name: "Faris Iskandar", area: "Setapak" },
+  { key: "michelle", name: "Michelle Tan", area: "Mont Kiara" },
+  { key: "harith", name: "Harith Zulkifli", area: "Cyberjaya" },
+  { key: "kavitha", name: "Kavitha Raj", area: "Puchong" },
+];
+
+const ALL_SECTORS: ListingCategory[] = ["subsale", "rental", "project"];
+function pickSectors(): ListingCategory[] {
+  const primary = pick(ALL_SECTORS);
+  const set = new Set<ListingCategory>([primary]);
+  if (chance(0.7)) set.add(pick(ALL_SECTORS));
+  if (chance(0.3)) set.add(pick(ALL_SECTORS));
+  return [...set];
+}
+function tierFor(): Tier {
+  // Deterministic spread: ~8 top, ~12 mid, rest low among the active set.
+  const r = rnd();
+  if (r < 0.27) return "top";
+  if (r < 0.62) return "mid";
+  return "low";
+}
+
+const agents: Agent[] = [];
+
+// 0 — Azlan (primary persona)
+agents.push({
+  key: "azlan",
+  userId: "user-azlan",
+  name: "Azlan Zakaria",
+  status: "active",
+  tier: "top",
+  area: "Ampang",
+  sectors: ["subsale", "rental"],
+  ren: "REN 09876",
+  photo: "/demo/agents/agent-azlan.svg",
+});
+
+// 1–8 — named agents (active)
+NAMED.forEach((n, i) => {
+  agents.push({
+    key: n.key,
+    userId: `user-${n.key}`,
+    name: n.name,
+    status: "active",
+    tier: tierFor(),
+    area: n.area,
+    sectors: pickSectors(),
+    ren: `REN ${12345 + i * 1111}`,
+    photo: `/demo/agents/agent-${String((i % 8) + 1).padStart(2, "0")}.svg`,
+  });
+});
+
+// 9–49 — generated agents
+for (let i = agents.length; i < 50; i++) {
+  const status: Agent["status"] =
+    i < 30 ? "active" : i < 44 ? "pending" : "deactivated";
+  agents.push({
+    key: `agent${i}`,
+    userId: `user-agent${i}`,
+    name: randomName(),
+    status,
+    tier: status === "active" ? tierFor() : "low",
+    area: pick(ALL_AREAS),
+    sectors: pickSectors(),
+    ren: `REN ${20000 + i * 137}`,
+    photo: `/demo/agents/agent-${String((i % 8) + 1).padStart(2, "0")}.svg`,
+  });
+}
+
+const activeAgents = agents.filter((a) => a.status === "active");
+
+// ---------------------------------------------------------------------------
+// Users & profiles
+// ---------------------------------------------------------------------------
 export const demoUsers: UserRow[] = [
-  { id: "user-superadmin", email: "superadmin@superren.demo", role: "super_admin", status: "active", created_at: NOW, last_login_at: NOW },
-  { id: "user-admin", email: "nasyriq@superren.demo", role: "admin", status: "active", created_at: NOW, last_login_at: NOW },
-  { id: "user-azlan", email: "azlan@superren.demo", role: "agent", status: "active", created_at: NOW, last_login_at: NOW },
-  ...AGENT_SEEDS.map((a, i) => ({
-    id: `user-${a.key}`,
+  { id: "user-superadmin", email: "superadmin@superren.demo", role: "super_admin", status: "active", created_at: daysAgoISO(400), last_login_at: NOW_ISO },
+  { id: "user-admin", email: "nasyriq@superren.demo", role: "admin", status: "active", created_at: daysAgoISO(380), last_login_at: NOW_ISO },
+  ...agents.map((a) => ({
+    id: a.userId,
     email: `${a.key}@superren.demo`,
     role: "agent" as const,
-    status: "active" as const,
-    created_at: NOW,
-    last_login_at: daysAgoISO(between(0, 6)),
+    status: a.status,
+    created_at: daysAgoISO(between(60, 360)),
+    last_login_at:
+      a.status === "active"
+        ? daysAgoISO(between(0, 6))
+        : a.status === "pending"
+          ? daysAgoISO(between(7, 40))
+          : daysAgoISO(between(60, 200)),
   })),
 ];
+
+const AGENCY_NAME = "Chester Properties Sdn Bhd";
+const TITLES = ["Real Estate Negotiator", "Senior Negotiator", "Property Consultant", "Sales Advisor"];
 
 /** Azlan's profile — the primary agent, with real contact details. */
 export const azlanProfile: AgentProfileRow = {
   id: "profile-azlan",
   user_id: "user-azlan",
-  full_name: AZLAN_SEED.name,
+  full_name: "Azlan Zakaria",
   display_name: "Azlan Zakaria",
   slug: "azlan-zakaria",
   profile_photo_url: "/demo/agents/agent-azlan.svg",
-  ren_number: AZLAN_SEED.ren,
+  ren_number: "REN 09876",
   agency_name: AGENCY_NAME,
   title: "Real Estate Negotiator",
   phone: "+60 17-690 0696",
   whatsapp: "+60176900696",
   email: "azlan@superren.demo",
-  bio: AZLAN_SEED.bio,
-  service_areas: AZLAN_SEED.areas,
-  specialization: AZLAN_SEED.spec,
+  bio: "Ejen hartanah kediaman & komersial di Ampang dan sekitar Kuala Lumpur. Chester Properties HQ — Super Ren Group.",
+  service_areas: ["Ampang", "Pandan Indah", "Pandan Jaya", "Ampang Hilir", "Hulu Klang"],
+  specialization: ["subsale", "rental", "commercial"],
   facebook_url: "https://facebook.com/azlan.ibnuzakaria",
   instagram_url: null,
   tiktok_url: null,
@@ -120,285 +267,359 @@ export const azlanProfile: AgentProfileRow = {
   qr_code_url: null,
   is_profile_public: true,
   is_demo: false,
-  created_at: NOW,
-  updated_at: NOW,
+  created_at: daysAgoISO(360),
+  updated_at: NOW_ISO,
 };
 
 export const demoAgents: AgentProfileRow[] = [
   azlanProfile,
-  ...AGENT_SEEDS.map((a, i) => ({
+  ...agents.slice(1).map((a, i) => ({
     id: `profile-${a.key}`,
-    user_id: `user-${a.key}`,
+    user_id: a.userId,
     full_name: a.name,
     display_name: a.name,
-    slug: slugify(a.name),
-    profile_photo_url: `/demo/agents/agent-${String(i + 1).padStart(2, "0")}.svg`,
+    slug: slugify(a.name) + (i > 0 ? `-${i}` : ""),
+    profile_photo_url: a.photo,
     ren_number: a.ren,
     agency_name: AGENCY_NAME,
-    title: i % 2 === 0 ? "Senior Negotiator" : "Real Estate Negotiator",
-    phone: `+60 12-${between(300, 999)} ${between(1000, 9999)}`,
-    whatsapp: `+6012${between(3000000, 9999999)}`,
+    title: pick(TITLES),
+    phone: `+60 1${between(2, 9)}-${between(300, 999)} ${between(1000, 9999)}`,
+    whatsapp: `+601${between(2, 9)}${between(3000000, 9999999)}`,
     email: `${a.key}@superren.demo`,
-    bio: a.bio,
-    service_areas: a.areas,
-    specialization: a.spec,
-    facebook_url: `https://facebook.com/${a.key}.superren`,
-    instagram_url: `https://instagram.com/${a.key}.superren`,
+    bio: `Ejen hartanah berpengalaman di ${a.area} dan sekitarnya.`,
+    service_areas: [a.area],
+    specialization: a.sectors,
+    facebook_url: null,
+    instagram_url: null,
     tiktok_url: null,
     website_url: null,
-    telegram_username: `@${a.key}_superren`,
+    telegram_username: null,
     qr_code_url: null,
-    is_profile_public: true,
+    is_profile_public: a.status === "active",
     is_demo: true,
-    created_at: NOW,
-    updated_at: NOW,
+    created_at: daysAgoISO(between(60, 360)),
+    updated_at: daysAgoISO(between(0, 30)),
   })),
 ];
 
 // ---------------------------------------------------------------------------
-// Listing generation, tuned per analytics scenario
+// Listings + deals + leads + shares generation
 // ---------------------------------------------------------------------------
-type Scenario =
-  | "strength_subsale" // Shah Alam/Klang: high close, fast
-  | "opportunity_project" // Bangi/Kajang/Semenyih: high interest
-  | "weakness_rental" // Mont Kiara/KLCC: views high, leads low
-  | "fast_rental" // Cyberjaya/Putrajaya: quick conversion
-  | "low_media" // Setapak/Wangsa Maju/Ampang/Gombak: few photos
-  | "general";
-
-type Spec = {
-  title: string;
-  category: ListingCategory;
-  area: string;
-  agentKey: string;
-  scenario: Scenario;
-  type: PropertyType;
-  price: number;
-};
-
-const T = (
-  title: string,
-  category: ListingCategory,
-  area: string,
-  agentKey: string,
-  scenario: Scenario,
-  type: PropertyType,
-  price: number,
-): Spec => ({ title, category, area, agentKey, scenario, type, price });
-
-const SPECS: Spec[] = [
-  // ---- Projects (15) ----
-  T("DEMO: Aurora Heights Residence, Bangi", "project", "Bangi", "aisyah", "opportunity_project", "condo", 480000),
-  T("DEMO: Southville Green Residence, Bangi", "project", "Bangi", "aisyah", "opportunity_project", "condo", 420000),
-  T("DEMO: Semenyih Garden Heights", "project", "Semenyih", "aisyah", "opportunity_project", "apartment", 360000),
-  T("DEMO: Kajang Sentral Suites", "project", "Kajang", "aisyah", "opportunity_project", "apartment", 530000),
-  T("DEMO: KL Urban Suites, Setapak", "project", "Setapak", "faris", "low_media", "condo", 560000),
-  T("DEMO: CyberLake Serviced Apartment, Cyberjaya", "project", "Cyberjaya", "harith", "fast_rental", "apartment", 450000),
-  T("DEMO: Damansara Metro Residence, PJ", "project", "Petaling Jaya", "daniel", "general", "condo", 720000),
-  T("DEMO: Bukit Jalil Parkview Suites", "project", "Bukit Jalil", "kavitha", "general", "condo", 690000),
-  T("DEMO: Shah Alam Sentral Residences", "project", "Shah Alam", "siti", "general", "apartment", 410000),
-  T("DEMO: Cheras City Link Residence", "project", "Cheras", "kavitha", "general", "condo", 540000),
-  T("DEMO: Putrajaya Lakeview Homes", "project", "Putrajaya", "harith", "fast_rental", "condo", 620000),
-  T("DEMO: Puchong Skypark Residence", "project", "Puchong", "kavitha", "general", "condo", 470000),
-  T("DEMO: Gombak Hilltop Residence", "project", "Gombak", "faris", "low_media", "apartment", 380000),
-  T("DEMO: Mont Kiara Sky Suites", "project", "Mont Kiara", "michelle", "weakness_rental", "condo", 1320000),
-  T("DEMO: Rawang Emerald Park", "project", "Rawang", "kavitha", "general", "terrace", 520000),
-
-  // ---- Subsale (15) ----
-  T("DEMO: Renovated Double Storey Terrace, Shah Alam", "subsale", "Shah Alam", "siti", "strength_subsale", "terrace", 720000),
-  T("DEMO: Corner Lot Terrace, Shah Alam", "subsale", "Shah Alam", "siti", "strength_subsale", "terrace", 850000),
-  T("DEMO: Klang Double Storey Terrace", "subsale", "Klang", "siti", "strength_subsale", "terrace", 560000),
-  T("DEMO: Spacious Terrace Near School, Klang", "subsale", "Klang", "siti", "strength_subsale", "terrace", 600000),
-  T("DEMO: Freehold Condo Near LRT, Wangsa Maju", "subsale", "Wangsa Maju", "faris", "low_media", "condo", 430000),
-  T("DEMO: Subsale Apartment, Ampang", "subsale", "Ampang", "faris", "low_media", "apartment", 320000),
-  T("DEMO: Corner Lot Terrace, Puchong", "subsale", "Puchong", "kavitha", "general", "terrace", 680000),
-  T("DEMO: Family Home Near MRT, Kajang", "subsale", "Kajang", "aisyah", "general", "terrace", 580000),
-  T("DEMO: High Floor Condo, Mont Kiara", "subsale", "Mont Kiara", "michelle", "weakness_rental", "condo", 1450000),
-  T("DEMO: Bangsar Condo with City View", "subsale", "Bangsar", "aiman", "general", "condo", 1280000),
-  T("DEMO: Semi-D with Large Land, Rawang", "subsale", "Rawang", "kavitha", "general", "semi_d", 980000),
-  T("DEMO: Townhouse Near School, Seri Kembangan", "subsale", "Seri Kembangan", "kavitha", "general", "terrace", 540000),
-  T("DEMO: KLCC Luxury Condo, High Floor", "subsale", "KLCC", "aiman", "general", "condo", 2350000),
-  T("DEMO: Damansara Bungalow with Pool", "subsale", "Damansara", "daniel", "general", "bungalow", 2800000),
-  T("DEMO: Subang Jaya Terrace, Renovated", "subsale", "Subang Jaya", "daniel", "general", "terrace", 760000),
-
-  // ---- Rental (15) ----
-  T("DEMO: Fully Furnished Studio, KLCC", "rental", "KLCC", "aiman", "weakness_rental", "condo", 3200),
-  T("DEMO: Luxury Condo for Rent, KLCC", "rental", "KLCC", "aiman", "weakness_rental", "condo", 5500),
-  T("DEMO: Condo for Rent, Mont Kiara", "rental", "Mont Kiara", "michelle", "weakness_rental", "condo", 4800),
-  T("DEMO: High Floor Suite, Mont Kiara", "rental", "Mont Kiara", "michelle", "weakness_rental", "condo", 6500),
-  T("DEMO: Cyberjaya Studio Near University", "rental", "Cyberjaya", "harith", "fast_rental", "apartment", 1300),
-  T("DEMO: Serviced Residence, Cyberjaya", "rental", "Cyberjaya", "harith", "fast_rental", "apartment", 1600),
-  T("DEMO: Putrajaya Studio for Rent", "rental", "Putrajaya", "harith", "fast_rental", "apartment", 1450),
-  T("DEMO: Family Rental Unit, Subang Jaya", "rental", "Subang Jaya", "daniel", "general", "condo", 2200),
-  T("DEMO: Affordable Apartment, Setapak", "rental", "Setapak", "faris", "low_media", "apartment", 1500),
-  T("DEMO: Apartment Near MRT, Cheras", "rental", "Cheras", "kavitha", "general", "apartment", 1800),
-  T("DEMO: Serviced Residence, Bukit Jalil", "rental", "Bukit Jalil", "kavitha", "general", "condo", 2400),
-  T("DEMO: Terrace House for Rent, Shah Alam", "rental", "Shah Alam", "siti", "general", "terrace", 2000),
-  T("DEMO: Office Unit for Rent, Petaling Jaya", "rental", "Petaling Jaya", "daniel", "general", "office", 4500),
-  T("DEMO: Shoplot Rental, Klang", "rental", "Klang", "siti", "general", "shop", 3800),
-  T("DEMO: Cozy Apartment, Wangsa Maju", "rental", "Wangsa Maju", "faris", "low_media", "apartment", 1400),
-
-  // ---- Azlan (primary persona) — demo listings to populate his dashboard ----
-  T("DEMO: Condo Mewah, Ampang Hilir", "subsale", "Ampang", "azlan", "strength_subsale", "condo", 1180000),
-  T("DEMO: Double Storey Terrace, Taman Kosas Ampang", "subsale", "Ampang", "azlan", "general", "terrace", 880000),
-  T("DEMO: Serviced Residence for Rent, Ampang", "rental", "Ampang", "azlan", "fast_rental", "condo", 2800),
-  T("DEMO: Office Suite, KL Eco City", "subsale", "Kuala Lumpur", "azlan", "general", "office", 1650000),
-];
-
-const FACILITIES = ["Swimming Pool", "Gym", "24h Security", "Playground", "Surau", "BBQ Area", "Sauna", "Multipurpose Hall"];
-const AMENITIES = ["Shopping Mall", "School", "Hospital", "Bank", "Restoran", "Pasar"];
-const SELLING = ["Lokasi strategik", "Hampir pengangkutan awam", "Kawasan selamat 24 jam", "Harga bawah pasaran", "Pemandangan menarik", "Sesuai untuk keluarga", "Pulangan sewa tinggi", "Senang dapat penyewa"];
-
-const STATUS_BY_SCENARIO: Record<Scenario, ListingStatus[]> = {
-  strength_subsale: ["sold", "sold", "booked", "available", "spa_in_progress"],
-  opportunity_project: ["available", "interested", "viewing_scheduled", "booked", "available"],
-  weakness_rental: ["available", "available", "interested", "withdrawn", "available"],
-  fast_rental: ["rented", "rented", "booked", "available", "rented"],
-  low_media: ["available", "available", "interested", "expired", "available"],
-  general: ["available", "viewing_scheduled", "booked", "sold", "rented", "available"],
-};
-
-function metricsFor(scenario: Scenario): { views: number; shares: number; leads: number; mediaCount: number; ageDays: number } {
-  switch (scenario) {
-    case "weakness_rental":
-      return { views: between(180, 420), shares: between(20, 45), leads: between(0, 2), mediaCount: between(6, 9), ageDays: between(40, 120) };
-    case "opportunity_project":
-      return { views: between(120, 260), shares: between(35, 70), leads: between(8, 16), mediaCount: between(6, 9), ageDays: between(10, 90) };
-    case "strength_subsale":
-      return { views: between(80, 180), shares: between(12, 30), leads: between(6, 12), mediaCount: between(7, 10), ageDays: between(5, 60) };
-    case "fast_rental":
-      return { views: between(90, 200), shares: between(18, 36), leads: between(7, 14), mediaCount: between(5, 8), ageDays: between(3, 45) };
-    case "low_media":
-      return { views: between(40, 110), shares: between(4, 12), leads: between(1, 4), mediaCount: 4, ageDays: between(20, 100) };
-    default:
-      return { views: between(60, 200), shares: between(10, 30), leads: between(3, 9), mediaCount: between(5, 9), ageDays: between(5, 150) };
-  }
-}
-
-function fix(t: PropertyType): PropertyType {
-  // normalize any placeholder types
-  return (["condo", "apartment", "terrace", "semi_d", "bungalow", "shop", "office", "land", "other"] as PropertyType[]).includes(t)
-    ? t
-    : "condo";
-}
-
 export const demoListings: ListingRow[] = [];
 export const demoMedia: Record<string, ListingMediaRow[]> = {};
 export const demoProjectDetails: Record<string, ListingProjectDetailRow> = {};
 export const demoSubsaleDetails: Record<string, ListingSubsaleDetailRow> = {};
 export const demoRentalDetails: Record<string, ListingRentalDetailRow> = {};
+export const demoLeads: LeadRow[] = [];
+export const demoDeals: DealRow[] = [];
+export const demoShares: ShareRow[] = [];
 
-const catCounter: Record<ListingCategory, number> = { project: 0, subsale: 0, rental: 0 };
+let lid = 0;
+let did = 0;
+let leadId = 0;
+let shareId = 0;
 
-SPECS.forEach((spec, idx) => {
-  const id = `listing-${idx + 1}`;
-  const agentUserId = `user-${spec.agentKey}`;
-  const m = metricsFor(spec.scenario);
-  catCounter[spec.category] += 1;
-  const heroN = String((catCounter[spec.category] - 1) % 12 + 1).padStart(2, "0");
-  const status = pick(STATUS_BY_SCENARIO[spec.scenario]);
-  const beds = spec.category === "rental" && spec.type === "office" ? 0 : between(1, 5);
-  const baths = Math.max(1, beds - between(0, 1));
-  const sqft = spec.type === "office" || spec.type === "shop" ? between(800, 2500) : between(650, 2200);
-  const createdAt = daysAgoISO(m.ageDays);
-  const sellingPts = [...SELLING].sort(() => rnd() - 0.5).slice(0, 5);
+const heroCounter: Record<ListingCategory, number> = { subsale: 0, rental: 0, project: 0 };
+function heroFor(cat: ListingCategory): string {
+  heroCounter[cat] = (heroCounter[cat] % 12) + 1;
+  return `/demo/properties/${cat}-${String(heroCounter[cat]).padStart(2, "0")}.svg`;
+}
+
+function priceFor(area: string, cat: ListingCategory): number {
+  const tier = AREA_TIER[area] ?? "mid";
+  const [lo, hi] = PRICE_RANGE[tier][cat];
+  const step = cat === "rental" ? 100 : 10000;
+  return Math.round(between(lo, hi) / step) * step;
+}
+
+function titleFor(cat: ListingCategory, area: string): string {
+  if (cat === "project") return `${pick(PROJECT_NAMES)} Residences, ${area}`;
+  if (cat === "rental") return `${pick(RENTAL_TITLES)}, ${area}`;
+  return `${pick(SUBSALE_TITLES)}, ${area}`;
+}
+
+type MakeOpts = {
+  agent: Agent;
+  cat: ListingCategory;
+  area: string;
+  status: ListingStatus;
+  ageDays: number;
+  withMedia?: boolean;
+  views?: number;
+  shares?: number;
+  leads?: number;
+  price?: number;
+};
+
+function makeListing(o: MakeOpts): ListingRow {
+  lid += 1;
+  const id = `listing-${lid}`;
+  const price = o.price ?? priceFor(o.area, o.cat);
+  const type = pick(PROP_TYPES[o.cat]);
+  const isLanded = ["terrace", "semi_d", "bungalow"].includes(type);
+  const createdAt = daysAgoISO(o.ageDays);
+  const views = o.views ?? between(40, 480);
+  const shares = o.shares ?? between(2, 26);
+  const leads = o.leads ?? between(0, 8);
+  const title = titleFor(o.cat, o.area);
+  const hero = heroFor(o.cat);
 
   const listing: ListingRow = {
     id,
-    agent_id: agentUserId,
-    category: spec.category,
-    title: spec.title,
-    slug: slugify(spec.title.replace("DEMO:", "")) + "-" + (idx + 1),
-    property_type: fix(spec.type),
-    area: spec.area,
-    address_private: `No. ${between(1, 99)}, Jalan ${spec.area} ${between(1, 20)}`,
-    address_public: `Berhampiran pusat ${spec.area}`,
+    agent_id: o.agent.userId,
+    category: o.cat,
+    title,
+    slug: slugify(title) + "-" + id,
+    property_type: type,
+    area: o.area,
+    address_private: `No. ${between(1, 99)}, Jalan ${o.area} ${between(1, 20)}`,
+    address_public: `Berhampiran pusat ${o.area}`,
     show_exact_address: false,
     map_url: "https://maps.google.com",
-    price: spec.price,
-    price_display: spec.category === "rental" ? `RM ${spec.price.toLocaleString()}/bulan` : null,
+    price,
+    price_display: o.cat === "rental" ? `RM ${price.toLocaleString()}/bulan` : null,
     tenure: pick(["freehold", "leasehold"]),
-    built_up_sqft: sqft,
-    land_area_sqft: ["terrace", "semi_d", "bungalow"].includes(spec.type) ? between(1400, 4000) : null,
-    bedrooms: beds || null,
-    bathrooms: baths,
+    built_up_sqft: between(650, isLanded ? 3200 : 1800),
+    land_area_sqft: isLanded ? between(1400, 4500) : null,
+    bedrooms: type === "office" || type === "shop" ? null : between(1, 5),
+    bathrooms: between(1, 4),
     carparks: between(1, 3),
     furnishing: pick(["unfurnished", "partly_furnished", "fully_furnished"]),
-    description:
-      `${spec.title.replace("DEMO: ", "")} — unit contoh untuk tujuan demo sahaja. ` +
-      `Terletak di ${spec.area}, sesuai untuk pelaburan atau kediaman. Hubungi agent untuk tempahan viewing.`,
-    top_selling_points: sellingPts,
+    description: `${title} di ${o.area}. Sesuai untuk pelaburan atau kediaman. Hubungi ejen untuk tempahan viewing.`,
+    top_selling_points: [...SELLING].sort(() => rnd() - 0.5).slice(0, 5),
     facilities: [...FACILITIES].sort(() => rnd() - 0.5).slice(0, between(3, 6)),
     amenities: [...AMENITIES].sort(() => rnd() - 0.5).slice(0, between(2, 5)),
-    nearby: [`${spec.area} MRT ${between(3, 12)} min`, `Mall ${spec.area}`, `Sekolah berhampiran`],
+    nearby: [`${o.area} MRT ${between(3, 12)} min`, `Mall ${o.area}`, `Sekolah berhampiran`],
     tags: pick([["hot"], ["value-buy"], ["urgent", "nego"], ["new"], []]),
-    status,
+    status: o.status,
     visibility: "public",
-    featured: rnd() < 0.25,
+    featured: chance(0.18),
     show_agent_phone: true,
     enable_whatsapp_cta: true,
     enable_telegram_share: true,
-    hero_image_url: `/demo/properties/${spec.category}-${heroN}.svg`,
-    internal_notes: "Nota dalaman demo.",
-    views_count: m.views,
-    shares_count: m.shares,
-    leads_count: m.leads,
+    hero_image_url: hero,
+    internal_notes: null,
+    views_count: views,
+    shares_count: shares,
+    leads_count: leads,
     is_demo: true,
     deleted_at: null,
     created_at: createdAt,
-    updated_at: status === "sold" || status === "rented" ? daysAgoISO(Math.max(1, m.ageDays - between(5, 20))) : createdAt,
-    published_at: status === "draft" ? null : createdAt,
+    updated_at: ["sold", "rented"].includes(o.status) ? daysAgoISO(Math.max(0, o.ageDays - between(5, 20))) : createdAt,
+    published_at: o.status === "draft" ? null : createdAt,
   };
   demoListings.push(listing);
 
-  // Media
-  demoMedia[id] = Array.from({ length: m.mediaCount }).map((_, i) => {
-    const nn = String(((catCounter[spec.category] - 1 + i) % 12) + 1).padStart(2, "0");
-    return {
-      id: `${id}-media-${i}`,
+  if (o.withMedia) {
+    const n = between(5, 9);
+    demoMedia[id] = Array.from({ length: n }).map((_, i) => ({
+      id: `${id}-m${i}`,
       listing_id: id,
       media_type: "image" as const,
-      url: `/demo/properties/${spec.category}-${nn}.svg`,
+      url: i === 0 ? hero : heroFor(o.cat),
       thumbnail_url: null,
-      caption: i === 0 ? "Hero · Sample Unit" : "Sample Unit",
+      caption: i === 0 ? "Hero" : "Unit",
       sort_order: i,
       file_size: between(120000, 480000),
       is_demo: true,
       created_at: createdAt,
-    };
-  });
+    }));
+  } else {
+    demoMedia[id] = [{
+      id: `${id}-m0`, listing_id: id, media_type: "image", url: hero,
+      thumbnail_url: null, caption: null, sort_order: 0, file_size: 240000,
+      is_demo: true, created_at: createdAt,
+    }];
+  }
 
-  // Category details
-  if (spec.category === "project") {
+  // Category detail
+  if (o.cat === "project") {
     demoProjectDetails[id] = {
-      id: `${id}-pd`, listing_id: id,
-      project_name: spec.title.replace("DEMO: ", ""), developer: pick(["Sunrise Demo Sdn Bhd", "GreenBuild Demo", "Metro Demo Devt"]),
+      id: `${id}-pd`, listing_id: id, project_name: title, developer: pick(["Sunrise Bhd", "GreenBuild Sdn Bhd", "Metro Devt", "Pavilion Group"]),
       completion_year: String(between(2026, 2028)), project_status: pick(["New Launch", "Under Construction", "Completed"]),
-      unit_types: "Type A, B, C", starting_price: spec.price, maintenance_fee: between(200, 450),
-      package_info: "Rebate 5% + percuma legal fee (demo)", booking_fee: 5000,
-      sales_gallery_link: "https://example.com/gallery", brochure_url: null,
+      unit_types: "Type A, B, C", starting_price: price, maintenance_fee: between(200, 450),
+      package_info: "Rebate 5% + percuma legal fee", booking_fee: 5000, sales_gallery_link: "https://example.com/gallery", brochure_url: null,
     };
-  } else if (spec.category === "subsale") {
+  } else if (o.cat === "subsale") {
     demoSubsaleDetails[id] = {
-      id: `${id}-sd`, listing_id: id, asking_price: spec.price, valuation_estimate: Math.round(spec.price * 0.97),
+      id: `${id}-sd`, listing_id: id, asking_price: price, valuation_estimate: Math.round(price * 0.97),
       occupancy_status: pick(["Owner occupied", "Tenanted", "Vacant"]), maintenance_fee: between(0, 350),
       renovation_info: pick(["Fully renovated", "Partially renovated", "Original condition"]),
       facing_direction: pick(["North", "South", "East", "West"]), title_type: pick(["Individual", "Strata", "Master"]),
-      viewing_availability: "Hujung minggu", co_broke_allowed: true, private_commission_notes: "Co-broke 50/50 (demo).",
+      viewing_availability: "Hujung minggu", co_broke_allowed: true, private_commission_notes: "Co-broke 50/50.",
     };
   } else {
     demoRentalDetails[id] = {
-      id: `${id}-rd`, listing_id: id, monthly_rental: spec.price, deposit_requirement: "2 bulan + 1 utiliti",
+      id: `${id}-rd`, listing_id: id, monthly_rental: price, deposit_requirement: "2 bulan + 1 utiliti",
       minimum_tenancy: "12 bulan", move_in_date: dateOnly(daysAgoISO(-between(7, 30))),
       tenant_preference: pick(["Profesional", "Keluarga", "Pelajar", "Semua"]),
-      pet_allowed: rnd() < 0.4, cooking_allowed: rnd() < 0.7, parking_included: true, utilities_info: "Tidak termasuk utiliti.",
+      pet_allowed: chance(0.4), cooking_allowed: chance(0.7), parking_included: true, utilities_info: "Tidak termasuk utiliti.",
     };
   }
-});
+
+  // Leads for this listing, spread over the past 6 months
+  for (let i = 0; i < leads; i++) {
+    leadId += 1;
+    demoLeads.push({
+      id: `lead-${leadId}`,
+      listing_id: id,
+      agent_id: o.agent.userId,
+      name: `${pick(LEAD_FIRST)} ${pick(LEAD_FIRST)}`,
+      phone: `+6013${between(1000000, 9999999)}`,
+      email: chance(0.5) ? `prospek${leadId}@example.com` : null,
+      source: pick(LEAD_SOURCES as unknown as LeadSource[]),
+      budget: `RM ${between(2, 25) * 100}k`,
+      preferred_area: o.area,
+      notes: "Lead contoh.",
+      status: pick(["new", "contacted", "viewing", "negotiating", "booked", "closed", "lost"] as LeadStatus[]),
+      is_demo: true,
+      created_at: daysAgoISO(between(0, 180)),
+      updated_at: NOW_ISO,
+    });
+  }
+
+  // Shares for this listing
+  for (let i = 0; i < shares; i++) {
+    shareId += 1;
+    demoShares.push({
+      id: `share-${shareId}`,
+      listing_id: id,
+      agent_id: o.agent.userId,
+      channel: pick(["whatsapp", "telegram", "copy_link", "website"] as ShareRow["channel"][]),
+      shared_at: daysAgoISO(between(0, 180)),
+      visitor_token: null,
+      metadata: null,
+      is_demo: true,
+    });
+  }
+
+  return listing;
+}
+
+// Deal status distribution & how it maps to a listing status.
+const DEAL_STATUS_POOL: DealStatus[] = [
+  "closed", "closed", "closed", "closed", "closed", // ~45%
+  "booked", "booked",
+  "pending", "pending",
+  "cancelled",
+  "refund",
+  "others",
+];
+function listingStatusForDeal(s: DealStatus, cat: ListingCategory): ListingStatus {
+  const sold = cat === "rental" ? "rented" : "sold";
+  switch (s) {
+    case "closed": return sold;
+    case "booked": return "booked";
+    case "pending": return cat === "rental" ? "loan_in_progress" : "spa_in_progress";
+    case "cancelled": return "withdrawn";
+    case "refund": return "failed";
+    default: return "expired";
+  }
+}
+
+function commissionFor(cat: ListingCategory, price: number): { amount: number; pct: number | null } {
+  if (cat === "rental") return { amount: price, pct: null }; // one month
+  const pct = cat === "project" ? 2.5 : 2;
+  return { amount: Math.round((price * pct) / 100), pct };
+}
+
+const dealsPerTier: Record<Tier, [number, number]> = { top: [11, 16], mid: [6, 10], low: [2, 5] };
+const invPerTier: Record<Tier, [number, number]> = { top: [4, 6], mid: [2, 4], low: [1, 2] };
+
+function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
+  const sectors: ListingCategory[] = agent.sectors.length
+    ? agent.sectors
+    : ["subsale"];
+  const primary = sectors[0];
+  const pickSector = (): ListingCategory =>
+    chance(0.65) ? primary : pick(sectors);
+  const areaFor = () =>
+    agent.key === "azlan" ? pick(AZLAN_AREAS) : chance(0.7) ? agent.area : pick(ALL_AREAS);
+
+  // Deals over the last 6 months
+  const [dlo, dhi] = dealsPerTier[agent.tier];
+  const nDeals = between(dlo, dhi);
+  for (let i = 0; i < nDeals; i++) {
+    const cat = pickSector();
+    const area = areaFor();
+    const status = pick(DEAL_STATUS_POOL);
+    const monthOffset = between(0, 5);
+    const isClosedLike = status === "closed" || status === "refund";
+
+    const closedDate = isClosedLike ? dateInMonth(monthOffset) : null;
+    const bookingBase = closedDate ?? dateInMonth(Math.min(5, monthOffset));
+    const bookingDate = new Date(bookingBase.getTime() - between(7, 40) * 86400000);
+    const ageDays = Math.max(1, Math.round((NOW.getTime() - bookingDate.getTime()) / 86400000));
+
+    const lStatus = listingStatusForDeal(status, cat);
+    const price = priceFor(area, cat);
+    const listing = makeListing({
+      agent, cat, area, status: lStatus, ageDays,
+      withMedia: !!opts.rich && i < 4,
+      price,
+      leads: isClosedLike ? between(3, 9) : between(1, 5),
+    });
+
+    const isRental = cat === "rental";
+    const comm = commissionFor(cat, price);
+    did += 1;
+    demoDeals.push({
+      id: `deal-${did}`,
+      listing_id: listing.id,
+      agent_id: agent.userId,
+      lead_id: null,
+      deal_type: isRental ? "rental" : "sale",
+      booking_date: dateOnly(bookingDate.toISOString()),
+      closed_date: closedDate ? dateOnly(closedDate.toISOString()) : null,
+      sold_price: isRental ? null : price,
+      rental_price: isRental ? price : null,
+      commission_amount: comm.amount,
+      commission_percentage: comm.pct,
+      customer_name: `${pick(LEAD_FIRST)} ${pick(LEAD_FIRST)}`,
+      customer_phone: `+6017${between(1000000, 9999999)}`,
+      payment_status: status === "closed" ? "Paid" : status === "refund" ? "Refunded" : status === "pending" ? "Partial" : "Pending",
+      deal_status: status,
+      remarks: null,
+      is_demo: true,
+      created_at: bookingDate.toISOString(),
+      updated_at: NOW_ISO,
+    });
+  }
+
+  // Active inventory listings (currently on the market)
+  const [ilo, ihi] = invPerTier[agent.tier];
+  const nInv = between(ilo, ihi);
+  for (let i = 0; i < nInv; i++) {
+    const cat = pickSector();
+    const area = areaFor();
+    makeListing({
+      agent, cat, area,
+      status: pick(["available", "available", "interested", "viewing_scheduled"]),
+      ageDays: between(3, 130),
+      withMedia: !!opts.rich,
+      views: between(40, 520),
+      shares: between(3, 28),
+      leads: between(0, 10),
+    });
+  }
+}
+
+// Azlan first (rich), then the other active agents.
+generateForAgent(agents[0], { rich: true });
+for (const a of activeAgents.slice(1)) generateForAgent(a);
+
+// A few inactive agents keep some older inventory for realism.
+for (const a of agents.filter((x) => x.status !== "active").slice(0, 8)) {
+  const cats: ListingCategory[] = a.sectors.length ? a.sectors : ["subsale"];
+  makeListing({
+    agent: a, cat: pick(cats), area: a.area,
+    status: pick(["expired", "withdrawn", "available"] as ListingStatus[]), ageDays: between(120, 220),
+    views: between(20, 120), shares: between(0, 6), leads: between(0, 2),
+  });
+}
 
 // ---------------------------------------------------------------------------
-// Real listing (not demo) — supplied by Azlan. Mixed in with demo data so the
-// group recognises genuine inventory alongside sample listings.
+// Real listing (not demo) — supplied by Azlan.
 // ---------------------------------------------------------------------------
 {
   const id = "listing-excella-ampang";
@@ -455,142 +676,18 @@ SPECS.forEach((spec, idx) => {
     published_at: createdAt,
   };
   demoListings.push(real);
-  demoMedia[id] = [
-    {
-      id: `${id}-media-0`,
-      listing_id: id,
-      media_type: "image",
-      url: "/demo/properties/commercial-excella.svg",
-      thumbnail_url: null,
-      caption: "Excella Business Park, Ampang",
-      sort_order: 0,
-      file_size: 320000,
-      is_demo: false,
-      created_at: createdAt,
-    },
-  ];
+  demoMedia[id] = [{
+    id: `${id}-media-0`, listing_id: id, media_type: "image",
+    url: "/demo/properties/commercial-excella.svg", thumbnail_url: null,
+    caption: "Excella Business Park, Ampang", sort_order: 0, file_size: 320000,
+    is_demo: false, created_at: createdAt,
+  }];
   demoSubsaleDetails[id] = {
-    id: `${id}-sd`,
-    listing_id: id,
-    asking_price: 5150000,
-    valuation_estimate: 5000000,
-    occupancy_status: "Vacant",
-    maintenance_fee: 0,
-    renovation_info: "Bare unit / original condition",
-    facing_direction: "North",
-    title_type: "Strata",
-    viewing_availability: "Dengan temujanji",
-    co_broke_allowed: true,
-    private_commission_notes: "Co-broke 50/50. Hubungi Azlan untuk butiran.",
+    id: `${id}-sd`, listing_id: id, asking_price: 5150000, valuation_estimate: 5000000,
+    occupancy_status: "Vacant", maintenance_fee: 0, renovation_info: "Bare unit / original condition",
+    facing_direction: "North", title_type: "Strata", viewing_availability: "Dengan temujanji",
+    co_broke_allowed: true, private_commission_notes: "Co-broke 50/50. Hubungi Azlan untuk butiran.",
   };
-}
-
-// ---------------------------------------------------------------------------
-// Leads (~130)
-// ---------------------------------------------------------------------------
-const LEAD_NAMES = ["Ahmad", "Siti", "Lim", "Tan", "Raj", "Nurul", "Hafiz", "Wong", "Aina", "Zul", "Farah", "Daniel", "Mei", "Iskandar", "Kavin", "Hana", "Syafiq", "Amir", "Chong", "Devi"];
-const LEAD_STATUS_BY_SCENARIO: Record<Scenario, LeadStatus[]> = {
-  strength_subsale: ["closed", "booked", "negotiating", "viewing", "contacted"],
-  opportunity_project: ["new", "contacted", "viewing", "negotiating", "lost"],
-  weakness_rental: ["new", "lost", "new", "contacted", "lost"],
-  fast_rental: ["closed", "booked", "viewing", "contacted", "closed"],
-  low_media: ["new", "lost", "contacted"],
-  general: ["new", "contacted", "viewing", "negotiating", "booked", "closed", "lost"],
-};
-
-export const demoLeads: LeadRow[] = [];
-let leadN = 0;
-for (const spec of SPECS) {
-  const listing = demoListings.find((l) => l.title === spec.title)!;
-  const count = listing.leads_count;
-  for (let i = 0; i < count && demoLeads.length < 135; i++) {
-    leadN++;
-    demoLeads.push({
-      id: `lead-${leadN}`,
-      listing_id: listing.id,
-      agent_id: listing.agent_id,
-      name: `${pick(LEAD_NAMES)} ${pick(LEAD_NAMES)}`,
-      phone: `+6013${between(1000000, 9999999)}`,
-      email: rnd() < 0.5 ? `prospek${leadN}@example.com` : null,
-      source: pick(LEAD_SOURCES as unknown as LeadSource[]),
-      budget: `RM ${between(2, 18) * 100}k`,
-      preferred_area: spec.area,
-      notes: "Lead contoh (demo).",
-      status: pick(LEAD_STATUS_BY_SCENARIO[spec.scenario]),
-      is_demo: true,
-      created_at: daysAgoISO(between(0, 170)),
-      updated_at: NOW,
-    });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Deals (~30) from booked/sold/rented listings
-// ---------------------------------------------------------------------------
-export const demoDeals: DealRow[] = [];
-let dealN = 0;
-for (const listing of demoListings) {
-  const isClosed = listing.status === "sold" || listing.status === "rented";
-  const isBooked = ["booked", "loan_in_progress", "spa_in_progress"].includes(listing.status);
-  if (!isClosed && !isBooked) continue;
-  dealN++;
-  const isRental = listing.category === "rental";
-  const price = listing.price ?? 0;
-  const commission = isRental ? price : Math.round(price * 0.02);
-  const bookingAgo = between(20, 90);
-  const closeDays = listing.area === "Shah Alam" || listing.area === "Klang"
-    ? between(6, 16)
-    : listing.area === "Cyberjaya" || listing.area === "Putrajaya"
-      ? between(5, 14)
-      : between(18, 40);
-  const closed = isClosed;
-  demoDeals.push({
-    id: `deal-${dealN}`,
-    listing_id: listing.id,
-    agent_id: listing.agent_id,
-    lead_id: null,
-    deal_type: isRental ? "rental" : "sale",
-    booking_date: dateOnly(daysAgoISO(bookingAgo)),
-    closed_date: closed ? dateOnly(daysAgoISO(Math.max(1, bookingAgo - closeDays))) : null,
-    sold_price: isRental ? null : price,
-    rental_price: isRental ? price : null,
-    commission_amount: commission,
-    commission_percentage: isRental ? null : 2,
-    customer_name: `${pick(LEAD_NAMES)} ${pick(LEAD_NAMES)} (demo)`,
-    customer_phone: `+6017${between(1000000, 9999999)}`,
-    payment_status: closed ? "Paid" : "Pending",
-    deal_status: closed ? "closed" : listing.status === "booked" ? "booked" : "processing",
-    remarks: "Deal contoh (demo).",
-    is_demo: true,
-    created_at: daysAgoISO(bookingAgo),
-    updated_at: NOW,
-  });
-}
-// A couple of cancelled deals for realism
-if (demoDeals.length > 2) {
-  demoDeals[1] = { ...demoDeals[1], deal_status: "cancelled", closed_date: null, payment_status: "Cancelled" };
-}
-
-// ---------------------------------------------------------------------------
-// Shares (sized per listing.shares_count)
-// ---------------------------------------------------------------------------
-const CHANNELS = ["whatsapp", "telegram", "copy_link", "website"] as const;
-export const demoShares: ShareRow[] = [];
-let shareN = 0;
-for (const listing of demoListings) {
-  for (let i = 0; i < listing.shares_count; i++) {
-    shareN++;
-    demoShares.push({
-      id: `share-${shareN}`,
-      listing_id: listing.id,
-      agent_id: listing.agent_id,
-      channel: pick(CHANNELS as unknown as ShareRow["channel"][]),
-      shared_at: daysAgoISO(between(0, 170)),
-      visitor_token: null,
-      metadata: null,
-      is_demo: true,
-    });
-  }
 }
 
 export function agentByUserId(userId: string): AgentProfileRow | undefined {

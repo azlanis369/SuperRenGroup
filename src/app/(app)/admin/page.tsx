@@ -3,8 +3,10 @@ import Link from "next/link";
 import {
   Users,
   UserCheck,
+  UserPlus,
   Building2,
   Wallet,
+  TrendingUp,
   ExternalLink,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
@@ -19,11 +21,14 @@ import type { BadgeProps } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { MoneyBarChart } from "@/components/dashboard/charts";
+import { DealStatusBreakdown } from "@/components/dashboard/deal-status-breakdown";
+import { AgentLeaderboard } from "@/components/admin/leaderboard";
 import { EmptyState } from "@/components/empty-state";
 import { DemoBadge } from "@/components/demo-badge";
 import { DemoResetCard } from "@/components/admin/demo-reset-card";
 
-export const metadata: Metadata = { title: "Admin Panel" };
+export const metadata: Metadata = { title: "Group Manager" };
 
 const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Admin",
@@ -48,6 +53,12 @@ const STATUS_LABELS: Record<UserStatus, string> = {
   pending: "Pending",
   deactivated: "Deactivated",
 };
+
+function momPct(now: number, prev: number): { pct: number; up: boolean } {
+  if (prev <= 0) return { pct: now > 0 ? 100 : 0, up: now >= prev };
+  const pct = Math.round(((now - prev) / prev) * 100);
+  return { pct: Math.abs(pct), up: now >= prev };
+}
 
 export default async function AdminPage() {
   await requireRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
@@ -78,27 +89,39 @@ export default async function AdminPage() {
     profileRows = (profilesRes.data ?? []) as AgentProfileRow[];
   }
   const profileByUser = new Map(profileRows.map((p) => [p.user_id, p]));
-
-  const totalLeads = stats.funnel.find((f) => f.stage === "Leads")?.count ?? 0;
+  const mom = momPct(stats.salesValueThisMonth, stats.salesValueLastMonth);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Group Manager</h1>
         <p className="text-muted-foreground">
-          Ringkasan & pengurusan seluruh kumpulan.
+          Prestasi & persaingan sihat seluruh kumpulan — Super Ren Group.
         </p>
         <DemoBadge className="mt-2" />
       </div>
 
       {/* Group KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard label="Total Agents" value={overview.totalAgents} icon={Users} />
+        <StatCard label="Jumlah Agen" value={overview.totalAgents} icon={Users} />
         <StatCard
-          label="Active Agents"
+          label="Agen Aktif"
           value={overview.activeAgents}
           icon={UserCheck}
           tone="success"
+        />
+        <StatCard
+          label="Menunggu"
+          value={overview.pendingAgents}
+          icon={UserPlus}
+          hint="pending"
+        />
+        <StatCard
+          label="Jualan Bulan Ini"
+          value={`RM ${Math.round(stats.salesValueThisMonth / 1000)}k`}
+          hint={`${mom.up ? "▲" : "▼"} ${mom.pct}% vs bln lalu`}
+          icon={TrendingUp}
+          tone="gold"
         />
         <StatCard
           label="Total Listings"
@@ -106,69 +129,56 @@ export default async function AdminPage() {
           icon={Building2}
         />
         <StatCard
-          label="Active Listings"
-          value={stats.activeListings}
-          icon={Building2}
-        />
-        <StatCard label="Total Leads" value={totalLeads} icon={Users} />
-        <StatCard
-          label="Commission"
+          label="Komisen (closed)"
           value={formatPrice(stats.totalCommission)}
           icon={Wallet}
           tone="gold"
         />
       </div>
 
-      {/* Agent leaderboard */}
-      <Card className="overflow-hidden">
+      {/* Leaderboard */}
+      <Card>
         <CardHeader>
-          <CardTitle>Agent Leaderboard</CardTitle>
+          <CardTitle>🏆 Carta Top 10 Agen</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          {overview.agentLeaderboard.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted-foreground">
-              Belum ada deal closed.
-            </p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-3 font-medium">Agent</th>
-                  <th className="px-5 py-3 font-medium">Closed</th>
-                  <th className="px-5 py-3 font-medium">Commission</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.agentLeaderboard.map((a, i) => (
-                  <tr
-                    key={`${a.name}-${i}`}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="px-5 py-3 font-medium text-foreground">
-                      {i + 1}. {a.name}
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{a.closed}</td>
-                    <td className="px-5 py-3 font-semibold">
-                      {formatPrice(a.commission)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <CardContent>
+          <AgentLeaderboard
+            sectorLeaderboards={overview.sectorLeaderboards}
+            overallLeaderboard={overview.overallLeaderboard}
+          />
         </CardContent>
       </Card>
+
+      {/* Group sales trend + deal status */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Nilai Jualan Kumpulan (6 Bulan)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MoneyBarChart data={stats.monthlySales} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Status Deal (Intelligence)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DealStatusBreakdown data={stats.dealStatusBreakdown} />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Users */}
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <CardTitle>Pengguna ({userRows.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {userRows.length === 0 ? (
             <EmptyState icon={Users} title="Tiada pengguna" />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="max-h-[480px] divide-y divide-border overflow-y-auto">
               {userRows.map((u) => {
                 const profile = profileByUser.get(u.id);
                 const name =

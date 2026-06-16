@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import { Percent, Clock, Wallet, AlertTriangle } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getDashboardStats, getSwot } from "@/lib/data/stats";
-import { LISTING_STATUS_LABELS } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+import { LISTING_STATUS_LABELS, SECTOR_LABELS } from "@/lib/constants";
+import { formatPrice, formatCompact } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
   MonthlyLineChart,
   SimpleBarChart,
   Funnel,
+  MoneyBarChart,
 } from "@/components/dashboard/charts";
+import { DealStatusBreakdown } from "@/components/dashboard/deal-status-breakdown";
 import { SwotPanel } from "@/components/dashboard/swot-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DemoBadge } from "@/components/demo-badge";
@@ -73,6 +75,50 @@ export default async function AnalyticsPage() {
           hint="> 45 hari"
           icon={AlertTriangle}
         />
+      </div>
+
+      {/* Sector performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Prestasi Mengikut Sektor (closed)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            {stats.bySector.map((s) => (
+              <div
+                key={s.sector}
+                className="rounded-xl border border-border bg-muted/30 p-3 text-center"
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {SECTOR_LABELS[s.sector]}
+                </p>
+                <p className="mt-1 text-lg font-bold text-foreground">
+                  RM {formatCompact(s.value)}
+                </p>
+                <p className="text-xs text-muted-foreground">{s.closed} closed</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Status Deal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DealStatusBreakdown data={stats.dealStatusBreakdown} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nilai Jualan (6 Bulan)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MoneyBarChart data={stats.monthlySales} />
+          </CardContent>
+        </Card>
       </div>
 
       <SwotPanel swot={swot} />

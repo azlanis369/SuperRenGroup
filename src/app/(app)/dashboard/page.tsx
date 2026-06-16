@@ -16,7 +16,13 @@ import { getDashboardStats, getSwot } from "@/lib/data/stats";
 import { CATEGORY_LABELS, LISTING_STATUS_LABELS } from "@/lib/constants";
 import { formatCompact, formatPrice } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { MonthlyLineChart, SimpleBarChart, Funnel } from "@/components/dashboard/charts";
+import {
+  MonthlyLineChart,
+  SimpleBarChart,
+  Funnel,
+  MoneyBarChart,
+} from "@/components/dashboard/charts";
+import { DealStatusBreakdown } from "@/components/dashboard/deal-status-breakdown";
 import { SwotPanel } from "@/components/dashboard/swot-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +50,16 @@ export default async function DashboardPage() {
   }));
 
   const greeting = user.profile?.display_name || user.profile?.full_name;
+  const salesMoM =
+    stats.salesValueLastMonth > 0
+      ? Math.round(
+          ((stats.salesValueThisMonth - stats.salesValueLastMonth) /
+            stats.salesValueLastMonth) *
+            100,
+        )
+      : stats.salesValueThisMonth > 0
+        ? 100
+        : 0;
 
   return (
     <div className="space-y-6">
@@ -99,6 +115,13 @@ export default async function DashboardPage() {
           tone="success"
         />
         <StatCard
+          label="Nilai Jualan (bln ini)"
+          value={`RM ${formatCompact(stats.salesValueThisMonth)}`}
+          hint={`${salesMoM >= 0 ? "▲" : "▼"} ${Math.abs(salesMoM)}% vs bln lalu`}
+          icon={CheckCircle2}
+          tone="gold"
+        />
+        <StatCard
           label="Conversion Rate"
           value={`${stats.conversionRate}%`}
           hint="lead → closed"
@@ -149,6 +172,22 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <MonthlyLineChart data={stats.monthlyClosed} color="hsl(41 52% 54%)" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nilai Jualan (6 Bulan)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MoneyBarChart data={stats.monthlySales} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Status Deal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DealStatusBreakdown data={stats.dealStatusBreakdown} />
           </CardContent>
         </Card>
         <Card>
