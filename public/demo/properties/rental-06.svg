@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Compact City Studio — Wangsa Maju (demo image)">
+  <defs>
+    <linearGradient id="grad-rental-6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a4f1d"/>
+      <stop offset="1" stop-color="#b5852f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#grad-rental-6)"/>
+  <circle cx="398" cy="140" r="320" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="1002" cy="700" r="240" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="980" cy="120" r="160" fill="#e0b35e" opacity="0.10"/>
+  <rect x="492" y="430" width="260" height="230" rx="8" fill="rgba(255,255,255,0.16)"/><rect x="772" y="490" width="140" height="170" rx="8" fill="rgba(255,255,255,0.10)"/><rect x="514" y="460" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="560" y="460" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="606" y="460" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="652" y="460" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="698" y="460" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="514" y="516" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="560" y="516" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="606" y="516" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="652" y="516" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="698" y="516" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="514" y="572" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="560" y="572" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="606" y="572" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="652" y="572" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/><rect x="698" y="572" width="28" height="34" rx="3" fill="rgba(255,255,255,0.18)"/>
+  <rect x="0" y="540" width="1200" height="260" fill="rgba(0,0,0,0.18)"/>
+  <!-- Category pill, top-left -->
+  <rect x="60" y="56" width="176" height="44" rx="22" fill="rgba(255,255,255,0.16)"/>
+  <text x="82" y="84" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="2" fill="#ffffff">RENTAL</text>
+  <!-- Index badge, top-right -->
+  <circle cx="1120" cy="80" r="34" fill="rgba(255,255,255,0.18)"/>
+  <text x="1120" y="90" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="800" fill="#ffffff">06</text>
+  <!-- DEMO IMAGE watermark -->
+  <text x="600" y="430" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="120" font-weight="800" letter-spacing="6" fill="rgba(255,255,255,0.08)">DEMO IMAGE</text>
+  <!-- Title + area -->
+  <text x="80" y="650" font-family="Inter, system-ui, sans-serif" font-size="52" font-weight="800" fill="#ffffff"><tspan x="80" dy="0">Compact City Studio</tspan></text>
+  <text x="80" y="720" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="500" fill="rgba(255,255,255,0.82)">Wangsa Maju</text>
+  <!-- Brand watermark, bottom-right -->
+  <text x="1140" y="760" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" fill="rgba(255,255,255,0.45)">Super Ren Group</text>
+</svg>

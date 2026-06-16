@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="2-Storey Terrace House — KLCC (demo image)">
+  <defs>
+    <linearGradient id="grad-subsale-1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f3d3a"/>
+      <stop offset="1" stop-color="#2f7d6b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#grad-subsale-1)"/>
+  <circle cx="133" cy="140" r="320" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="967" cy="700" r="240" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="980" cy="120" r="160" fill="#5fc9a8" opacity="0.10"/>
+  <polygon points="377,480 527,390 677,480" fill="rgba(255,255,255,0.16)"/><rect x="397" y="480" width="260" height="180" rx="6" fill="rgba(255,255,255,0.10)"/><rect x="497" y="560" width="60" height="100" rx="4" fill="rgba(255,255,255,0.20)"/><rect x="433" y="520" width="48" height="48" rx="4" fill="rgba(255,255,255,0.18)"/><rect x="573" y="520" width="48" height="48" rx="4" fill="rgba(255,255,255,0.18)"/><polygon points="677,480 807,400 937,480" fill="rgba(255,255,255,0.10)"/><rect x="695" y="480" width="224" height="180" rx="6" fill="rgba(255,255,255,0.10)"/>
+  <rect x="0" y="540" width="1200" height="260" fill="rgba(0,0,0,0.18)"/>
+  <!-- Category pill, top-left -->
+  <rect x="60" y="56" width="187" height="44" rx="22" fill="rgba(255,255,255,0.16)"/>
+  <text x="82" y="84" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="2" fill="#ffffff">SUBSALE</text>
+  <!-- Index badge, top-right -->
+  <circle cx="1120" cy="80" r="34" fill="rgba(255,255,255,0.18)"/>
+  <text x="1120" y="90" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="800" fill="#ffffff">01</text>
+  <!-- DEMO IMAGE watermark -->
+  <text x="600" y="430" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="120" font-weight="800" letter-spacing="6" fill="rgba(255,255,255,0.08)">DEMO IMAGE</text>
+  <!-- Title + area -->
+  <text x="80" y="650" font-family="Inter, system-ui, sans-serif" font-size="52" font-weight="800" fill="#ffffff"><tspan x="80" dy="0">2-Storey Terrace House</tspan></text>
+  <text x="80" y="720" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="500" fill="rgba(255,255,255,0.82)">KLCC</text>
+  <!-- Brand watermark, bottom-right -->
+  <text x="1140" y="760" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" fill="rgba(255,255,255,0.45)">Super Ren Group</text>
+</svg>
