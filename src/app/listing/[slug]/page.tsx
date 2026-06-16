@@ -6,6 +6,7 @@ import {
   Bath,
   Car,
   Maximize,
+  LandPlot,
   Sofa,
   MapPin,
   CheckCircle2,
@@ -147,6 +148,11 @@ export default async function PublicListingPage({
                   icon={Maximize}
                   label="Built-up"
                   value={listing.built_up_sqft ? `${Number(listing.built_up_sqft).toLocaleString()} sqft` : null}
+                />
+                <Fact
+                  icon={LandPlot}
+                  label="Land area"
+                  value={listing.land_area_sqft ? `${Number(listing.land_area_sqft).toLocaleString()} sqft` : null}
                 />
                 <Fact
                   icon={Sofa}

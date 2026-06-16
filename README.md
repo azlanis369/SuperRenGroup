@@ -32,12 +32,18 @@ npm install
 npm run dev
 ```
 
-Buka http://localhost:3000 → pilih persona (Admin / Super Admin / Agent) di skrin
-log masuk. Bila **tiada** Supabase dikonfigurasi, aplikasi automatik berjalan
-dalam **Local Demo Mode**: dataset penuh dalam-memori (8 agent, 45 listing,
-130+ leads, 30+ deals, share, SWOT) — tiada pangkalan data, tiada auth backend
-diperlukan. Dashboard, katalog awam, profil agent, analytics & SWOT semua hidup
-dengan data contoh berlabel "DEMO".
+Buka http://localhost:3000 → pilih persona di skrin log masuk:
+
+- **Azlan Zakaria** — ejen utama (persona lalai), dengan butiran kontak sebenar
+- **Nasyriq** — Group Manager (admin)
+- Beberapa ejen contoh untuk leaderboard, serta Super Admin
+
+Bila **tiada** Supabase dikonfigurasi, aplikasi automatik berjalan dalam
+**Local Demo Mode**: dataset penuh dalam-memori (9 agent, ~50 listing, 130+
+leads, 30+ deals, share, SWOT) — tiada pangkalan data, tiada auth backend
+diperlukan. Dashboard, katalog awam, profil agent, analytics & SWOT semua hidup.
+Data contoh berlabel "DEMO"; satu listing **sebenar** (Shoplot Excella Business
+Park, Ampang) dicampur masuk sebagai inventori betul.
 
 > Local Demo menyimpan perubahan (cth. Add Listing) dalam memori untuk sesi
 > pelayan semasa sahaja — restart untuk reset. Muat naik media dimatikan
@@ -84,8 +90,10 @@ Jalankan migrasi SQL dalam Supabase SQL Editor (ikut urutan):
 npm run demo:images
 ```
 
-Menjana placeholder ke `public/demo/` (hartanah, avatar agent, OG fallback).
-Semua imej adalah **dummy/sample sahaja** — bukan hartanah sebenar.
+Menjana imej SVG ke `public/demo/` — pemandangan hartanah bergaya (menara
+kondo, rumah teres, apartment, shoplot komersial), avatar agent, dan kad OG
+berjenama. Semua imej adalah **ilustrasi/sample** yang dijana — bukan foto
+hartanah sebenar.
 
 ### 5. Seed data demo
 
