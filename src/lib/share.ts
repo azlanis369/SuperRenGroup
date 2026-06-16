@@ -9,14 +9,38 @@ type ShareListing = {
   top_selling_points?: string[];
 };
 
+/** Mandatory agent identity stamp appended to every shared listing message. */
+export type AgentStamp = {
+  name: string;
+  phone?: string | null;
+  ren?: string | null;
+  agency?: string | null;
+};
+
 function priceText(l: ShareListing): string {
   if (l.price_display) return l.price_display;
   if (l.price) return formatPrice(l.price);
   return "Harga atas permintaan";
 }
 
-/** Build the standard WhatsApp share message (Malay template). */
-export function buildShareMessage(l: ShareListing): string {
+/** Malaysian local phone format, e.g. "+60 17-690 0696" -> "0176900696". */
+function phoneLocal(phone?: string | null): string {
+  const wa = toWaNumber(phone ?? "");
+  if (!wa) return "";
+  return wa.startsWith("60") ? "0" + wa.slice(2) : wa;
+}
+
+/** The 4-info agent stamp (name, phone, REN, agency) that must persist. */
+export function buildAgentStamp(a?: AgentStamp | null): string {
+  if (!a?.name) return "";
+  const phone = phoneLocal(a.phone);
+  const line1 = phone ? `${a.name} - ${phone}` : a.name;
+  const line2 = [a.ren, a.agency].filter(Boolean).join(" | ");
+  return `\n\n${line1}` + (line2 ? `\n${line2}` : "");
+}
+
+/** Build the standard WhatsApp share message (Malay template) with agent stamp. */
+export function buildShareMessage(l: ShareListing, agent?: AgentStamp): string {
   const url = absoluteUrl(`/listing/${l.slug}`);
   const points = (l.top_selling_points ?? []).slice(0, 3);
   const highlights =
@@ -29,17 +53,18 @@ export function buildShareMessage(l: ShareListing): string {
     `${l.title}\n${priceText(l)}\n${l.area}` +
     highlights +
     `\n\nLihat gambar & details:\n${url}\n\n` +
-    `Hubungi saya jika berminat.`
+    `Hubungi saya jika berminat.` +
+    buildAgentStamp(agent)
   );
 }
 
-/** wa.me link that opens WhatsApp with the share message prefilled. */
-export function buildWhatsAppShareUrl(l: ShareListing, phone?: string): string {
-  const text = encodeURIComponent(buildShareMessage(l));
-  const number = toWaNumber(phone);
-  return number
-    ? `https://wa.me/${number}?text=${text}`
-    : `https://wa.me/?text=${text}`;
+/** wa.me link that opens WhatsApp with the share message (incl. stamp) prefilled. */
+export function buildWhatsAppShareUrl(
+  l: ShareListing,
+  agent?: AgentStamp,
+): string {
+  const text = encodeURIComponent(buildShareMessage(l, agent));
+  return `https://wa.me/?text=${text}`;
 }
 
 /** wa.me link a public viewer uses to contact the agent about a listing. */
@@ -56,10 +81,10 @@ export function buildInquiryWhatsAppUrl(
   return `https://wa.me/${toWaNumber(agentPhone)}?text=${text}`;
 }
 
-/** Telegram share — v1 copy/share text + share intent URL. */
-export function buildTelegramShareUrl(l: ShareListing): string {
+/** Telegram share — copy/share text (incl. stamp) + share intent URL. */
+export function buildTelegramShareUrl(l: ShareListing, agent?: AgentStamp): string {
   const url = absoluteUrl(`/listing/${l.slug}`);
-  const text = encodeURIComponent(buildShareMessage(l));
+  const text = encodeURIComponent(buildShareMessage(l, agent));
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`;
 }
 

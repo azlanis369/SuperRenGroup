@@ -24,15 +24,18 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { DemoTag } from "@/components/demo-badge";
 import { ShareButton } from "@/components/listings/share-button";
+import type { AgentStamp } from "@/lib/share";
 
 export function ListingCard({
   listing,
   index = 1,
   manage = true,
+  agent,
 }: {
   listing: ListingRow & { is_demo?: boolean };
   index?: number;
   manage?: boolean;
+  agent?: AgentStamp;
 }) {
   const hero = resolveHero(listing.hero_image_url, listing.category, index);
   const priceText = listing.price_display || formatPrice(listing.price);
@@ -115,7 +118,7 @@ export function ListingCard({
                 <Pencil className="h-4 w-4" /> Edit
               </Link>
             </Button>
-            <ShareButton listing={listing} />
+            <ShareButton listing={listing} agent={agent} />
           </div>
         ) : null}
       </div>
