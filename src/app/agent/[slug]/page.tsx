@@ -13,15 +13,15 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { getPublicAgent } from "@/lib/data/agents";
-import { LISTING_CATEGORIES, CATEGORY_LABELS } from "@/lib/constants";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
+import { SEGMENT_ORDER, SEGMENT_LABELS, segmentOf } from "@/lib/segment";
 import { Logo } from "@/components/brand";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DemoTag } from "@/components/demo-badge";
 import { QrCode } from "@/components/public/qr-code";
-import { PublicListingCard } from "@/components/public/public-listing-card";
+import { ListingCarousel } from "@/components/public/listing-carousel";
 import { ProfileShareButton } from "@/components/public/profile-share-button";
 
 export async function generateMetadata({
@@ -63,10 +63,10 @@ export default async function AgentProfilePage({
   const name = profile.display_name || profile.full_name;
   const profileUrl = absoluteUrl(`/agent/${slug}`);
 
-  const featured = listings.filter((l) => l.featured);
-  const byCategory = LISTING_CATEGORIES.map((cat) => ({
-    cat,
-    items: listings.filter((l) => l.category === cat),
+  const featured = listings.filter((l) => l.featured).slice(0, 8);
+  const bySegment = SEGMENT_ORDER.map((seg) => ({
+    seg,
+    items: listings.filter((l) => segmentOf(l) === seg),
   })).filter((g) => g.items.length > 0);
 
   const socials = [
@@ -196,31 +196,16 @@ export default async function AgentProfilePage({
 
         {/* Featured */}
         {featured.length ? (
-          <section className="mt-8">
-            <h2 className="mb-3 text-lg font-bold">Listing Unggulan</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {featured.slice(0, 6).map((l, i) => (
-                <PublicListingCard key={l.id} listing={l} index={i + 1} />
-              ))}
-            </div>
-          </section>
+          <ListingCarousel title="Listing Unggulan" listings={featured} accent />
         ) : null}
 
-        {/* By category */}
-        {byCategory.map((group) => (
-          <section key={group.cat} className="mt-8">
-            <h2 className="mb-3 text-lg font-bold">
-              {CATEGORY_LABELS[group.cat]}{" "}
-              <span className="text-sm font-normal text-muted-foreground">
-                ({group.items.length})
-              </span>
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.items.map((l, i) => (
-                <PublicListingCard key={l.id} listing={l} index={i + 1} />
-              ))}
-            </div>
-          </section>
+        {/* Grouped by segment, each in a tidy horizontal scroll row */}
+        {bySegment.map((group) => (
+          <ListingCarousel
+            key={group.seg}
+            title={SEGMENT_LABELS[group.seg]}
+            listings={group.items}
+          />
         ))}
 
         {listings.length === 0 ? (

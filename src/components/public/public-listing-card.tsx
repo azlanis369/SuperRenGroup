@@ -2,12 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { BedDouble, Bath, Maximize } from "lucide-react";
 import type { ListingRow } from "@/lib/database.types";
-import { CATEGORY_LABELS } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
+import { SEGMENT_LABELS, segmentOf } from "@/lib/segment";
 import { resolveHero } from "@/lib/media";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
-import { DemoTag } from "@/components/demo-badge";
 
 export function PublicListingCard({
   listing,
@@ -31,8 +30,7 @@ export function PublicListingCard({
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute left-2 top-2 flex gap-1.5">
-          <Badge tone="primary">{CATEGORY_LABELS[listing.category]}</Badge>
-          {listing.is_demo ? <DemoTag>Demo</DemoTag> : null}
+          <Badge tone="primary">{SEGMENT_LABELS[segmentOf(listing)]}</Badge>
         </div>
         <div className="absolute right-2 top-2">
           <StatusBadge status={listing.status} />

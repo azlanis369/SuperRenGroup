@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Shop Office, Cheras — Cheras">
+  <defs>
+    <linearGradient id="sky-g-commercial-1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6f9fd6"/>
+      <stop offset="0.6" stop-color="#cfd9ec"/>
+      <stop offset="1" stop-color="#ffe7c2"/>
+    </linearGradient>
+    <radialGradient id="sun-g-commercial-1" cx="0.78" cy="0.22" r="0.5">
+      <stop offset="0" stop-color="#fff2cf" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#fff2cf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="g-commercial-1-a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b8198"/>
+      <stop offset="1" stop-color="#41566f"/>
+    </linearGradient>
+    <linearGradient id="g-commercial-1-b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b8198"/>
+      <stop offset="1" stop-color="#41566f"/>
+    </linearGradient>
+    <linearGradient id="ground-g-commercial-1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6ba368"/>
+      <stop offset="1" stop-color="#4d7a4c"/>
+    </linearGradient>
+    <linearGradient id="scrim-g-commercial-1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#06121f" stop-opacity="0"/>
+      <stop offset="1" stop-color="#06121f" stop-opacity="0.78"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="560" fill="url(#sky-g-commercial-1)"/>
+  <rect width="1200" height="800" fill="url(#sun-g-commercial-1)"/>
+  <g fill="#ffffff" opacity="0.40"><ellipse cx="94" cy="176" rx="53" ry="30"/><ellipse cx="64" cy="185" rx="33" ry="21"/><ellipse cx="127" cy="183" rx="36" ry="22"/></g><g fill="#ffffff" opacity="0.23"><ellipse cx="915" cy="165" rx="84" ry="47"/><ellipse cx="868" cy="179" rx="52" ry="33"/><ellipse cx="966" cy="177" rx="56" ry="35"/></g><g fill="#ffffff" opacity="0.40"><ellipse cx="307" cy="73" rx="60" ry="33"/><ellipse cx="274" cy="83" rx="36" ry="23"/><ellipse cx="344" cy="81" rx="40" ry="25"/></g>
+  <g fill="#9bb4cf" opacity="0.35"><rect x="-20" y="391" width="100" height="169"/><rect x="95" y="354" width="95" height="206"/><rect x="200" y="462" width="80" height="98"/><rect x="297" y="356" width="84" height="204"/><rect x="395" y="467" width="57" height="93"/><rect x="463" y="480" width="67" height="80"/><rect x="551" y="389" width="68" height="171"/><rect x="630" y="439" width="74" height="121"/><rect x="713" y="407" width="62" height="153"/><rect x="786" y="499" width="57" height="61"/><rect x="863" y="356" width="93" height="204"/><rect x="966" y="447" width="62" height="113"/><rect x="1035" y="370" width="75" height="190"/><rect x="1127" y="374" width="61" height="186"/><rect x="1206" y="392" width="95" height="168"/></g>
+
+  <!-- Ground -->
+  <rect y="560" width="1200" height="240" fill="url(#ground-g-commercial-1)"/>
+  <rect y="560" width="1200" height="46" fill="rgba(255,255,255,0.06)"/>
+
+  <!-- Subject -->
+  <rect x="230" y="200" width="740" height="360" rx="6" fill="url(#g-commercial-1-a)"/><rect x="230" y="284" width="740" height="8" fill="rgba(255,255,255,0.28)"/><rect x="230" y="374" width="740" height="8" fill="rgba(255,255,255,0.28)"/><rect x="230" y="464" width="740" height="8" fill="rgba(255,255,255,0.28)"/><rect x="254" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="332" y="216" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="410" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="488" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="566" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="644" y="216" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="722" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="800" y="216" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="878" y="216" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="254" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="332" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="410" y="306" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="488" y="306" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="566" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="644" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="722" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="800" y="306" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="878" y="306" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="254" y="396" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="332" y="396" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="410" y="396" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="488" y="396" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="566" y="396" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="644" y="396" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="722" y="396" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="800" y="396" width="60" height="50" rx="1.5" fill="rgba(255,255,255,0.22)" opacity="0.5"/><rect x="878" y="396" width="60" height="50" rx="1.5" fill="#bfe6ff" opacity="0.9"/><rect x="246" y="478" width="708" height="76" rx="3" fill="rgba(190,230,255,0.85)"/><rect x="246" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="364" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="482" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="600" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="718" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="836" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="954" y="478" width="8" height="76" fill="rgba(255,255,255,0.55)"/><rect x="230" y="194" width="740" height="34" rx="4" fill="rgba(212,175,55,0.85)"/>
+
+  <!-- Foreground greenery -->
+  <g><rect x="87" y="635" width="18" height="75" rx="9" fill="#6b4a2b"/><circle cx="96" cy="612" r="58" fill="#3f7d4e"/><circle cx="56" cy="641" r="43" fill="#4a8c59"/><circle cx="136" cy="638" r="46" fill="#357045"/><circle cx="96" cy="606" r="40" fill="#56a067"/></g>
+  <g><rect x="1112" y="634" width="15" height="66" rx="8" fill="#6b4a2b"/><circle cx="1120" cy="614" r="51" fill="#3f7d4e"/><circle cx="1085" cy="639" r="38" fill="#4a8c59"/><circle cx="1155" cy="637" r="40" fill="#357045"/><circle cx="1120" cy="609" r="35" fill="#56a067"/></g>
+
+  <!-- Bottom scrim for legibility -->
+  <rect y="550" width="1200" height="250" fill="url(#scrim-g-commercial-1)"/>
+
+  <!-- Title + area -->
+  <text x="70" y="704" font-family="Inter, system-ui, sans-serif" font-size="50" font-weight="800" fill="#ffffff"><tspan x="70" dy="0">Shop Office, Cheras</tspan></text>
+  <text x="70" y="756" font-family="Inter, system-ui, sans-serif" font-size="27" font-weight="500" fill="rgba(255,255,255,0.9)">📍 Cheras</text>
+
+  <!-- Brand mark -->
+  <text x="1140" y="756" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" fill="rgba(255,255,255,0.82)">Super Ren <tspan fill="#e7c875">Group</tspan></text>
+</svg>

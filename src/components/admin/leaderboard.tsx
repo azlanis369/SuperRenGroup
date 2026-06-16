@@ -26,9 +26,11 @@ type Tab = Sector | "overall";
 export function AgentLeaderboard({
   sectorLeaderboards,
   overallLeaderboard,
+  highlightUserId,
 }: {
   sectorLeaderboards: { sector: Sector; rows: LeaderRow[] }[];
   overallLeaderboard: LeaderRow[];
+  highlightUserId?: string;
 }) {
   const [tab, setTab] = useState<Tab>("overall");
 
@@ -72,7 +74,12 @@ export function AgentLeaderboard({
       ) : (
         <ol className="space-y-2">
           {rows.map((r, i) => (
-            <LeaderItem key={r.userId} row={r} rank={i + 1} />
+            <LeaderItem
+              key={r.userId}
+              row={r}
+              rank={i + 1}
+              highlight={r.userId === highlightUserId}
+            />
           ))}
         </ol>
       )}
@@ -84,7 +91,15 @@ export function AgentLeaderboard({
   );
 }
 
-function LeaderItem({ row, rank }: { row: LeaderRow; rank: number }) {
+function LeaderItem({
+  row,
+  rank,
+  highlight = false,
+}: {
+  row: LeaderRow;
+  rank: number;
+  highlight?: boolean;
+}) {
   const medal =
     rank === 1
       ? "bg-gold text-white"
@@ -95,7 +110,14 @@ function LeaderItem({ row, rank }: { row: LeaderRow; rank: number }) {
           : "bg-muted text-muted-foreground";
 
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-2.5 pr-3.5">
+    <li
+      className={cn(
+        "flex items-center gap-3 rounded-xl border p-2.5 pr-3.5",
+        highlight
+          ? "border-gold bg-gold/10 ring-1 ring-gold"
+          : "border-border bg-card",
+      )}
+    >
       <div
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",

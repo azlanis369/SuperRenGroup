@@ -12,7 +12,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
-import { getDashboardStats, getSwot } from "@/lib/data/stats";
+import { getDashboardStats, getSwot, getAgentStanding } from "@/lib/data/stats";
 import { CATEGORY_LABELS, LISTING_STATUS_LABELS } from "@/lib/constants";
 import { formatCompact, formatPrice } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -23,6 +23,8 @@ import {
   MoneyBarChart,
 } from "@/components/dashboard/charts";
 import { DealStatusBreakdown } from "@/components/dashboard/deal-status-breakdown";
+import { AgentStandingCard } from "@/components/dashboard/agent-standing";
+import { AgentLeaderboard } from "@/components/admin/leaderboard";
 import { SwotPanel } from "@/components/dashboard/swot-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,9 +37,10 @@ export default async function DashboardPage() {
   const admin = isAdmin(user.role);
   const scope = admin ? {} : { ownerId: user.id };
 
-  const [stats, swot] = await Promise.all([
+  const [stats, swot, standing] = await Promise.all([
     getDashboardStats(scope),
     getSwot(scope),
+    admin ? Promise.resolve(null) : getAgentStanding(user.id),
   ]);
 
   const statusData = stats.byStatus
@@ -50,6 +53,7 @@ export default async function DashboardPage() {
   }));
 
   const greeting = user.profile?.display_name || user.profile?.full_name;
+  const firstName = (greeting ?? "Agen").split(" ")[0];
   const salesMoM =
     stats.salesValueLastMonth > 0
       ? Math.round(
@@ -83,6 +87,11 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Standing & yearly achievement (agents) */}
+      {standing ? (
+        <AgentStandingCard standing={standing} firstName={firstName} />
+      ) : null}
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -145,6 +154,22 @@ export default async function DashboardPage() {
           tone="gold"
         />
       </div>
+
+      {/* Leaderboard — healthy competition (agents see their own rank) */}
+      {standing ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>🏆 Carta Top 10 Agen — Persaingan Sihat</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AgentLeaderboard
+              sectorLeaderboards={standing.sectorLeaderboards}
+              overallLeaderboard={standing.overallLeaderboard}
+              highlightUserId={user.id}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {admin ? (
         <Card>

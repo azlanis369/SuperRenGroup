@@ -83,10 +83,17 @@ const PRICE_RANGE = {
 } as const;
 
 const PROP_TYPES: Record<ListingCategory, PropertyType[]> = {
-  subsale: ["terrace", "semi_d", "bungalow", "condo", "apartment", "shop"],
+  subsale: ["terrace", "semi_d", "bungalow", "condo", "apartment", "shop", "land"],
   rental: ["condo", "apartment", "terrace", "office", "shop"],
   project: ["condo", "apartment"],
 };
+const RESIDENTIAL_TYPES: PropertyType[] = [
+  "terrace",
+  "semi_d",
+  "bungalow",
+  "condo",
+  "apartment",
+];
 
 const PROJECT_NAMES = [
   "Aurora", "Lumina", "Vista", "Emerald", "Zenith", "Solaris", "Tropika", "Saffron",
@@ -319,10 +326,16 @@ let did = 0;
 let leadId = 0;
 let shareId = 0;
 
-const heroCounter: Record<ListingCategory, number> = { subsale: 0, rental: 0, project: 0 };
-function heroFor(cat: ListingCategory): string {
-  heroCounter[cat] = (heroCounter[cat] % 12) + 1;
-  return `/demo/properties/${cat}-${String(heroCounter[cat]).padStart(2, "0")}.svg`;
+const heroCounters: Record<string, number> = {};
+function cycleHero(key: string, max: number): string {
+  heroCounters[key] = ((heroCounters[key] ?? 0) % max) + 1;
+  return `/demo/properties/${key}-${String(heroCounters[key]).padStart(2, "0")}.svg`;
+}
+/** Pick a hero image that matches the asset type (land / commercial / category). */
+function heroForListing(cat: ListingCategory, type: PropertyType): string {
+  if (type === "land") return cycleHero("land", 6);
+  if (type === "shop" || type === "office") return cycleHero("commercial", 6);
+  return cycleHero(cat, 12);
 }
 
 function priceFor(area: string, cat: ListingCategory): number {
@@ -332,7 +345,13 @@ function priceFor(area: string, cat: ListingCategory): number {
   return Math.round(between(lo, hi) / step) * step;
 }
 
-function titleFor(cat: ListingCategory, area: string): string {
+const LAND_TITLES = ["Tanah Lot", "Bungalow Lot", "Freehold Land", "Commercial Land", "Agricultural Land"];
+const COMMERCIAL_TITLES = ["Shop Office", "Retail Shoplot", "Ground Floor Shop", "Office Lot", "3-Storey Shop Office"];
+
+function titleFor(cat: ListingCategory, area: string, type: PropertyType): string {
+  if (type === "land") return `${pick(LAND_TITLES)}, ${area}`;
+  if (type === "shop" || type === "office")
+    return `${pick(COMMERCIAL_TITLES)}, ${area}`;
   if (cat === "project") return `${pick(PROJECT_NAMES)} Residences, ${area}`;
   if (cat === "rental") return `${pick(RENTAL_TITLES)}, ${area}`;
   return `${pick(SUBSALE_TITLES)}, ${area}`;
@@ -349,20 +368,21 @@ type MakeOpts = {
   shares?: number;
   leads?: number;
   price?: number;
+  pool?: PropertyType[];
 };
 
 function makeListing(o: MakeOpts): ListingRow {
   lid += 1;
   const id = `listing-${lid}`;
   const price = o.price ?? priceFor(o.area, o.cat);
-  const type = pick(PROP_TYPES[o.cat]);
+  const type = pick(o.pool ?? PROP_TYPES[o.cat]);
   const isLanded = ["terrace", "semi_d", "bungalow"].includes(type);
   const createdAt = daysAgoISO(o.ageDays);
   const views = o.views ?? between(40, 480);
   const shares = o.shares ?? between(2, 26);
   const leads = o.leads ?? between(0, 8);
-  const title = titleFor(o.cat, o.area);
-  const hero = heroFor(o.cat);
+  const title = titleFor(o.cat, o.area, type);
+  const hero = heroForListing(o.cat, type);
 
   const listing: ListingRow = {
     id,
@@ -379,10 +399,15 @@ function makeListing(o: MakeOpts): ListingRow {
     price,
     price_display: o.cat === "rental" ? `RM ${price.toLocaleString()}/bulan` : null,
     tenure: pick(["freehold", "leasehold"]),
-    built_up_sqft: between(650, isLanded ? 3200 : 1800),
-    land_area_sqft: isLanded ? between(1400, 4500) : null,
-    bedrooms: type === "office" || type === "shop" ? null : between(1, 5),
-    bathrooms: between(1, 4),
+    built_up_sqft: type === "land" ? null : between(650, isLanded ? 3200 : 1800),
+    land_area_sqft:
+      type === "land"
+        ? between(2400, 12000)
+        : isLanded
+          ? between(1400, 4500)
+          : null,
+    bedrooms: ["office", "shop", "land"].includes(type) ? null : between(1, 5),
+    bathrooms: type === "land" ? null : between(1, 4),
     carparks: between(1, 3),
     furnishing: pick(["unfurnished", "partly_furnished", "fully_furnished"]),
     description: `${title} di ${o.area}. Sesuai untuk pelaburan atau kediaman. Hubungi ejen untuk tempahan viewing.`,
@@ -416,7 +441,7 @@ function makeListing(o: MakeOpts): ListingRow {
       id: `${id}-m${i}`,
       listing_id: id,
       media_type: "image" as const,
-      url: i === 0 ? hero : heroFor(o.cat),
+      url: i === 0 ? hero : heroForListing(o.cat, type),
       thumbnail_url: null,
       caption: i === 0 ? "Hero" : "Unit",
       sort_order: i,
@@ -535,6 +560,9 @@ function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
     chance(0.65) ? primary : pick(sectors);
   const areaFor = () =>
     agent.key === "azlan" ? pick(AZLAN_AREAS) : chance(0.7) ? agent.area : pick(ALL_AREAS);
+  // Azlan deals in residential subsale + rental; his commercial is the real Excella listing.
+  const poolFor = (c: ListingCategory): PropertyType[] | undefined =>
+    agent.key === "azlan" && c === "subsale" ? RESIDENTIAL_TYPES : undefined;
 
   // Deals over the last 6 months
   const [dlo, dhi] = dealsPerTier[agent.tier];
@@ -557,6 +585,7 @@ function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
       agent, cat, area, status: lStatus, ageDays,
       withMedia: !!opts.rich && i < 4,
       price,
+      pool: poolFor(cat),
       leads: isClosedLike ? between(3, 9) : between(1, 5),
     });
 
@@ -597,6 +626,7 @@ function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
       status: pick(["available", "available", "interested", "viewing_scheduled"]),
       ageDays: between(3, 130),
       withMedia: !!opts.rich,
+      pool: poolFor(cat),
       views: between(40, 520),
       shares: between(3, 28),
       leads: between(0, 10),

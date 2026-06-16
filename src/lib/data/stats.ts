@@ -569,12 +569,17 @@ const emptyAcc = (): Acc => ({
   commission: 0,
 });
 
-/** Build per-sector + overall Top-10 leaderboards with month-over-month deltas. */
+type RankedLists = {
+  sectors: { sector: Sector; rows: LeaderRow[] }[]; // full ranking
+  overall: LeaderRow[]; // full ranking
+};
+
+/** Build full per-sector + overall rankings with month-over-month deltas. */
 function buildLeaderboards(
   deals: DealRow[],
   sectorOf: (listingId: string) => Sector | null,
   metaOf: (agentId: string) => AgentMeta,
-) {
+): RankedLists {
   const monthStart = startOfMonth();
   const lastStart = new Date(
     new Date().getFullYear(),
@@ -622,7 +627,7 @@ function buildLeaderboards(
     const sorted = entries.sort(
       (a, b) => b[1].tm - a[1].tm || b[1].total - a[1].total,
     );
-    return sorted.slice(0, 10).map(([id, a], i) => {
+    return sorted.map(([id, a], i) => {
       const meta = metaOf(id);
       const thisRank = i + 1;
       const lr = lastRank.get(id) ?? thisRank;
@@ -643,23 +648,26 @@ function buildLeaderboards(
   };
 
   return {
-    sectorLeaderboards: SECTORS.map((sector) => ({
-      sector,
-      rows: rank(perSector.get(sector)!),
-    })),
-    overallLeaderboard: rank(overall),
+    sectors: SECTORS.map((sector) => ({ sector, rows: rank(perSector.get(sector)!) })),
+    overall: rank(overall),
   };
 }
 
-export async function getAdminOverview(): Promise<AdminOverview> {
+type GroupData = {
+  deals: DealRow[];
+  sectorOf: (lid: string) => Sector | null;
+  metaOf: (id: string) => AgentMeta;
+  agentUsers: { status: string }[];
+};
+
+async function loadGroupData(): Promise<GroupData> {
   if (LOCAL_DEMO) {
-    const agentUsers = demoUsers.filter((u) => u.role === ROLES.AGENT);
     const catById = new Map(demoListings.map((l) => [l.id, l.category]));
     const profById = new Map(demoAgents.map((a) => [a.user_id, a]));
-    const lb = buildLeaderboards(
-      demoDeals,
-      (lid) => (catById.get(lid) as Sector) ?? null,
-      (id) => {
+    return {
+      deals: demoDeals,
+      sectorOf: (lid) => (catById.get(lid) as Sector) ?? null,
+      metaOf: (id) => {
         const p = profById.get(id);
         return {
           name: p?.display_name || p?.full_name || "Agent",
@@ -667,12 +675,9 @@ export async function getAdminOverview(): Promise<AdminOverview> {
           area: p?.service_areas?.[0] ?? null,
         };
       },
-    );
-    return {
-      totalAgents: agentUsers.length,
-      activeAgents: agentUsers.filter((u) => u.status === "active").length,
-      pendingAgents: agentUsers.filter((u) => u.status === "pending").length,
-      ...lb,
+      agentUsers: demoUsers
+        .filter((u) => u.role === ROLES.AGENT)
+        .map((u) => ({ status: u.status })),
     };
   }
   const supabase = await createClient();
@@ -685,14 +690,12 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       supabase.from("deals").select("*"),
       supabase.from("listings").select("id, category"),
     ]);
-
-  const agentUsers = (users ?? []).filter((u) => u.role === "agent");
   const catById = new Map((listings ?? []).map((l) => [l.id, l.category]));
   const profById = new Map((profiles ?? []).map((p) => [p.user_id, p]));
-  const lb = buildLeaderboards(
-    (deals ?? []) as DealRow[],
-    (lid) => (catById.get(lid) as Sector) ?? null,
-    (id) => {
+  return {
+    deals: (deals ?? []) as DealRow[],
+    sectorOf: (lid) => (catById.get(lid) as Sector) ?? null,
+    metaOf: (id) => {
       const p = profById.get(id);
       return {
         name: p?.display_name || p?.full_name || "Agent",
@@ -700,12 +703,69 @@ export async function getAdminOverview(): Promise<AdminOverview> {
         area: p?.service_areas?.[0] ?? null,
       };
     },
-  );
+    agentUsers: (users ?? [])
+      .filter((u) => u.role === "agent")
+      .map((u) => ({ status: u.status })),
+  };
+}
+
+export async function getAdminOverview(): Promise<AdminOverview> {
+  const g = await loadGroupData();
+  const lb = buildLeaderboards(g.deals, g.sectorOf, g.metaOf);
+  return {
+    totalAgents: g.agentUsers.length,
+    activeAgents: g.agentUsers.filter((u) => u.status === "active").length,
+    pendingAgents: g.agentUsers.filter((u) => u.status === "pending").length,
+    sectorLeaderboards: lb.sectors.map((s) => ({ sector: s.sector, rows: s.rows.slice(0, 10) })),
+    overallLeaderboard: lb.overall.slice(0, 10),
+  };
+}
+
+export type Standing = { rank: number | null; of: number; value: number; closed: number };
+export type AgentStanding = {
+  overall: Standing;
+  sectors: { sector: Sector; standing: Standing }[];
+  sectorLeaderboards: { sector: Sector; rows: LeaderRow[] }[];
+  overallLeaderboard: LeaderRow[];
+  yearValue: number;
+  yearClosed: number;
+  yearCommission: number;
+};
+
+/** A single agent's standing in the group + their year-to-date achievement. */
+export async function getAgentStanding(userId: string): Promise<AgentStanding> {
+  const g = await loadGroupData();
+  const lb = buildLeaderboards(g.deals, g.sectorOf, g.metaOf);
+
+  const standingFrom = (rows: LeaderRow[]): Standing => {
+    const i = rows.findIndex((r) => r.userId === userId);
+    return {
+      rank: i < 0 ? null : i + 1,
+      of: rows.length,
+      value: i < 0 ? 0 : rows[i].thisMonthValue,
+      closed: i < 0 ? 0 : rows[i].thisMonthClosed,
+    };
+  };
+
+  const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
+  let yearValue = 0;
+  let yearClosed = 0;
+  let yearCommission = 0;
+  for (const d of g.deals) {
+    if (d.agent_id !== userId || d.deal_status !== "closed" || !d.closed_date) continue;
+    if (new Date(d.closed_date).toISOString() < yearStart) continue;
+    yearValue += dealValue(d);
+    yearClosed += 1;
+    yearCommission += Number(d.commission_amount) || 0;
+  }
 
   return {
-    totalAgents: agentUsers.length,
-    activeAgents: agentUsers.filter((u) => u.status === "active").length,
-    pendingAgents: agentUsers.filter((u) => u.status === "pending").length,
-    ...lb,
+    overall: standingFrom(lb.overall),
+    sectors: lb.sectors.map((s) => ({ sector: s.sector, standing: standingFrom(s.rows) })),
+    sectorLeaderboards: lb.sectors.map((s) => ({ sector: s.sector, rows: s.rows.slice(0, 10) })),
+    overallLeaderboard: lb.overall.slice(0, 10),
+    yearValue,
+    yearClosed,
+    yearCommission,
   };
 }
