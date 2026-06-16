@@ -8,10 +8,16 @@ import type { Role } from "@/lib/constants";
 import { Logo } from "@/components/brand";
 import { useLanguage } from "@/contexts/language-context";
 
-export function Sidebar({ role }: { role: Role }) {
+export function Sidebar({
+  role,
+  isTeamLeader = false,
+}: {
+  role: Role;
+  isTeamLeader?: boolean;
+}) {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const items = visibleNav(SIDEBAR_NAV, role);
+  const items = visibleNav(SIDEBAR_NAV, role, isTeamLeader);
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-border bg-card">

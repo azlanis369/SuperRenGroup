@@ -11,11 +11,15 @@ import {
 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { ROLES, type Role, type UserStatus } from "@/lib/constants";
-import { getAdminOverview, getDashboardStats } from "@/lib/data/stats";
+import {
+  getAdminOverview,
+  getDashboardStats,
+  getGroupTeams,
+} from "@/lib/data/stats";
 import { createClient } from "@/lib/supabase/server";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { demoUsers, demoAgents } from "@/lib/demo-data/dataset";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatCompact } from "@/lib/utils";
 import type { AgentProfileRow, UserRow } from "@/lib/database.types";
 import type { BadgeProps } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,6 +94,8 @@ export default async function AdminPage() {
   }
   const profileByUser = new Map(profileRows.map((p) => [p.user_id, p]));
   const mom = momPct(stats.salesValueThisMonth, stats.salesValueLastMonth);
+  const teams = await getGroupTeams();
+  const teamBest = Math.max(...teams.map((t) => t.thisMonthValue), 1);
 
   return (
     <div className="space-y-6">
@@ -148,6 +154,53 @@ export default async function AdminPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Team comparison */}
+      {teams.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Perbandingan Pasukan ({teams.length} Team Leader)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {teams.map((tm, i) => (
+              <div key={tm.leaderId}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">
+                    {i + 1}. Pasukan {tm.leaderName}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      · {tm.memberCount} ejen
+                    </span>
+                  </span>
+                  <span className="font-semibold">
+                    RM {formatCompact(tm.thisMonthValue)}
+                    <span
+                      className={
+                        tm.momPct >= 0
+                          ? "ml-1.5 text-xs text-emerald-600"
+                          : "ml-1.5 text-xs text-red-500"
+                      }
+                    >
+                      {tm.momPct >= 0 ? "▲" : "▼"} {Math.abs(tm.momPct)}%
+                    </span>
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+                    style={{
+                      width: `${Math.round((tm.thisMonthValue / teamBest) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {tm.thisMonthClosed} closed bln ini · purata RM{" "}
+                  {formatCompact(tm.avgPerAgent)} / ejen
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Group sales trend + deal status */}
       <div className="grid gap-4 lg:grid-cols-2">

@@ -16,6 +16,8 @@ import {
   demoAgents,
   demoDeals,
   demoListings,
+  demoTeamLeaders,
+  teamMemberIds,
 } from "@/lib/demo-data/dataset";
 
 /** Transaction value of a deal (sale price, or annualised rental). */
@@ -768,4 +770,154 @@ export async function getAgentStanding(userId: string): Promise<AgentStanding> {
     yearClosed,
     yearCommission,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Teams (Team Leader view + Group Manager comparison)
+// ---------------------------------------------------------------------------
+export type TeamMemberRow = {
+  userId: string;
+  name: string;
+  photo: string | null;
+  area: string | null;
+  isLeader: boolean;
+  thisMonth: number;
+  lastMonth: number;
+  thisMonthClosed: number;
+  yearValue: number;
+  yearClosed: number;
+};
+
+export type TeamOverview = {
+  leaderId: string;
+  leaderName: string;
+  memberCount: number;
+  activeThisMonth: number;
+  thisMonthValue: number;
+  lastMonthValue: number;
+  thisMonthClosed: number;
+  yearValue: number;
+  members: TeamMemberRow[];
+  needsAttention: TeamMemberRow[];
+};
+
+/** Performance of a Team Leader's team (members + the leader). Demo-only. */
+export async function getTeamOverview(
+  leaderId: string,
+): Promise<TeamOverview | null> {
+  if (!LOCAL_DEMO) return null;
+  const ids = teamMemberIds(leaderId);
+  if (ids.length === 0) return null;
+
+  const monthStart = startOfMonth();
+  const lastStart = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() - 1,
+    1,
+  ).toISOString();
+  const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
+
+  const acc = new Map<
+    string,
+    { tm: number; lm: number; tmc: number; yv: number; yc: number }
+  >();
+  for (const id of ids) acc.set(id, { tm: 0, lm: 0, tmc: 0, yv: 0, yc: 0 });
+  const idSet = new Set(ids);
+  for (const d of demoDeals) {
+    if (!idSet.has(d.agent_id) || d.deal_status !== "closed" || !d.closed_date)
+      continue;
+    const iso = new Date(d.closed_date).toISOString();
+    const v = dealValue(d);
+    const a = acc.get(d.agent_id)!;
+    if (iso >= yearStart) {
+      a.yv += v;
+      a.yc += 1;
+    }
+    if (iso >= monthStart) {
+      a.tm += v;
+      a.tmc += 1;
+    } else if (iso >= lastStart) {
+      a.lm += v;
+    }
+  }
+
+  const profById = new Map(demoAgents.map((p) => [p.user_id, p]));
+  const members: TeamMemberRow[] = ids
+    .map((id) => {
+      const p = profById.get(id);
+      const a = acc.get(id)!;
+      return {
+        userId: id,
+        name: p?.display_name || p?.full_name || "Agent",
+        photo: p?.profile_photo_url ?? null,
+        area: p?.service_areas?.[0] ?? null,
+        isLeader: id === leaderId,
+        thisMonth: a.tm,
+        lastMonth: a.lm,
+        thisMonthClosed: a.tmc,
+        yearValue: a.yv,
+        yearClosed: a.yc,
+      };
+    })
+    .sort((x, y) => y.thisMonth - x.thisMonth);
+
+  const leaderName =
+    demoTeamLeaders.find((l) => l.userId === leaderId)?.name ?? "Team Leader";
+
+  return {
+    leaderId,
+    leaderName,
+    memberCount: members.length,
+    activeThisMonth: members.filter((m) => m.thisMonthClosed > 0).length,
+    thisMonthValue: members.reduce((s, m) => s + m.thisMonth, 0),
+    lastMonthValue: members.reduce((s, m) => s + m.lastMonth, 0),
+    thisMonthClosed: members.reduce((s, m) => s + m.thisMonthClosed, 0),
+    yearValue: members.reduce((s, m) => s + m.yearValue, 0),
+    members,
+    needsAttention: members.filter(
+      (m) => !m.isLeader && m.thisMonthClosed === 0,
+    ),
+  };
+}
+
+export type TeamSummary = {
+  leaderId: string;
+  leaderName: string;
+  memberCount: number;
+  thisMonthValue: number;
+  lastMonthValue: number;
+  thisMonthClosed: number;
+  avgPerAgent: number;
+  momPct: number;
+};
+
+/** Side-by-side comparison of all teams for the Group Manager. Demo-only. */
+export async function getGroupTeams(): Promise<TeamSummary[]> {
+  if (!LOCAL_DEMO) return [];
+  const out: TeamSummary[] = [];
+  for (const l of demoTeamLeaders) {
+    const ov = await getTeamOverview(l.userId);
+    if (!ov) continue;
+    const momPct =
+      ov.lastMonthValue > 0
+        ? Math.round(
+            ((ov.thisMonthValue - ov.lastMonthValue) / ov.lastMonthValue) * 100,
+          )
+        : ov.thisMonthValue > 0
+          ? 100
+          : 0;
+    out.push({
+      leaderId: l.userId,
+      leaderName: l.name,
+      memberCount: ov.memberCount,
+      thisMonthValue: ov.thisMonthValue,
+      lastMonthValue: ov.lastMonthValue,
+      thisMonthClosed: ov.thisMonthClosed,
+      avgPerAgent: ov.memberCount
+        ? Math.round(ov.thisMonthValue / ov.memberCount)
+        : 0,
+      momPct,
+    });
+  }
+  return out.sort((a, b) => b.thisMonthValue - a.thisMonthValue);
 }

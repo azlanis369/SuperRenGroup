@@ -147,6 +147,8 @@ type Agent = {
   sectors: ListingCategory[]; // sectors they work
   ren: string;
   photo: string;
+  isLeader?: boolean;
+  teamLeaderId?: string | null;
 };
 
 const NAMED = [
@@ -226,6 +228,49 @@ for (let i = agents.length; i < 50; i++) {
 const activeAgents = agents.filter((a) => a.status === "active");
 
 // ---------------------------------------------------------------------------
+// Teams: 4 Team Leaders, each supervising a group of agents.
+// Azlan leads a team of 11 agents; the other 3 leaders share the rest.
+// ---------------------------------------------------------------------------
+const LEADER_KEYS = ["azlan", "aiman", "siti", "daniel"];
+for (const a of agents) {
+  a.isLeader = false;
+  a.teamLeaderId = null;
+}
+const leaders = LEADER_KEYS.map((k) => agents.find((a) => a.key === k)!).filter(
+  Boolean,
+);
+leaders.forEach((l) => {
+  l.isLeader = true;
+  l.teamLeaderId = l.userId;
+});
+const azlanLeader = leaders.find((l) => l.key === "azlan")!;
+const otherLeaders = leaders.filter((l) => l.key !== "azlan");
+const teamPool = activeAgents.filter((a) => !LEADER_KEYS.includes(a.key));
+teamPool.forEach((m, i) => {
+  m.teamLeaderId =
+    i < 11
+      ? azlanLeader.userId
+      : otherLeaders[(i - 11) % otherLeaders.length].userId;
+});
+
+export const demoTeamLeaders = leaders.map((l) => ({
+  userId: l.userId,
+  name: l.name,
+}));
+export function isTeamLeader(userId: string): boolean {
+  return agents.some((a) => a.userId === userId && a.isLeader);
+}
+export function teamLeaderIdOf(userId: string): string | null {
+  return agents.find((a) => a.userId === userId)?.teamLeaderId ?? null;
+}
+/** User IDs in a leader's team (includes the leader). */
+export function teamMemberIds(leaderId: string): string[] {
+  return agents
+    .filter((a) => a.teamLeaderId === leaderId)
+    .map((a) => a.userId);
+}
+
+// ---------------------------------------------------------------------------
 // Users & profiles
 // ---------------------------------------------------------------------------
 export const demoUsers: UserRow[] = [
@@ -259,11 +304,11 @@ export const azlanProfile: AgentProfileRow = {
   profile_photo_url: "/demo/agents/agent-azlan.svg",
   ren_number: "REN 09876",
   agency_name: AGENCY_NAME,
-  title: "Real Estate Negotiator",
+  title: "Team Leader · Real Estate Negotiator",
   phone: "+60 17-690 0696",
   whatsapp: "+60176900696",
   email: "azlan@superren.demo",
-  bio: "Ejen hartanah kediaman & komersial di Ampang dan sekitar Kuala Lumpur. Chester Properties HQ — Super Ren Group.",
+  bio: "Team Leader di Super Ren Group (Chester Properties HQ). Ejen hartanah kediaman & komersial di Ampang dan sekitar Kuala Lumpur — mengetuai pasukan 11 ejen.",
   service_areas: ["Ampang", "Pandan Indah", "Pandan Jaya", "Ampang Hilir", "Hulu Klang"],
   specialization: ["subsale", "rental", "commercial"],
   facebook_url: "https://facebook.com/azlan.ibnuzakaria",
