@@ -8,6 +8,7 @@ type NavDict = {
   leads: string;
   myProfile: string;
   analytics: string;
+  team: string;
   adminPanel: string;
   settings: string;
 };
@@ -50,7 +51,8 @@ export const translations: Record<Lang, Translations> = {
       leads: "Leads",
       myProfile: "My Profile",
       analytics: "Analytics",
-      adminPanel: "Admin Panel",
+      team: "My Team",
+      adminPanel: "Group Manager",
       settings: "Settings",
     },
     settings: {
@@ -84,7 +86,8 @@ export const translations: Record<Lang, Translations> = {
       leads: "Petunjuk Jualan",
       myProfile: "Profil Saya",
       analytics: "Analitik",
-      adminPanel: "Panel Admin",
+      team: "Pasukan Saya",
+      adminPanel: "Group Manager",
       settings: "Tetapan",
     },
     settings: {

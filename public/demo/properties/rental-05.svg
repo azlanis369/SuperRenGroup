@@ -48,10 +48,6 @@
   <!-- Bottom scrim for legibility -->
   <rect y="550" width="1200" height="250" fill="url(#scrim-g-rental-5)"/>
 
-  <!-- Category pill -->
-  <rect x="60" y="52" width="142" height="42" rx="21" fill="rgba(6,18,31,0.42)"/>
-  <text x="84" y="79" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="2" fill="#ffffff">RENTAL</text>
-
   <!-- Title + area -->
   <text x="70" y="704" font-family="Inter, system-ui, sans-serif" font-size="50" font-weight="800" fill="#ffffff"><tspan x="70" dy="0">Bright 3-Room Apartment</tspan></text>
   <text x="70" y="756" font-family="Inter, system-ui, sans-serif" font-size="27" font-weight="500" fill="rgba(255,255,255,0.9)">📍 Setapak</text>

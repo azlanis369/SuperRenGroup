@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Settings,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { ROLES, type Role } from "@/lib/constants";
@@ -18,6 +19,7 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   roles?: Role[]; // omitted = all roles
+  teamLeaderOnly?: boolean; // show only if the user leads a team
 };
 
 const ALL: Role[] = [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.AGENT];
@@ -28,6 +30,13 @@ export const SIDEBAR_NAV: NavItem[] = [
   { labelKey: "addListing", href: "/listings/new", icon: PlusCircle, roles: ALL },
   { labelKey: "deals", href: "/deals", icon: Handshake, roles: ALL },
   { labelKey: "leads", href: "/leads", icon: Users, roles: ALL },
+  {
+    labelKey: "team",
+    href: "/team",
+    icon: UsersRound,
+    roles: [ROLES.AGENT],
+    teamLeaderOnly: true,
+  },
   { labelKey: "myProfile", href: "/profile", icon: UserRound, roles: ALL },
   { labelKey: "analytics", href: "/analytics", icon: BarChart3, roles: ALL },
   {
@@ -47,6 +56,14 @@ export const BOTTOM_NAV: NavItem[] = [
   { labelKey: "myProfile", href: "/profile", icon: UserRound },
 ];
 
-export function visibleNav(items: NavItem[], role: Role): NavItem[] {
-  return items.filter((i) => !i.roles || i.roles.includes(role));
+export function visibleNav(
+  items: NavItem[],
+  role: Role,
+  isTeamLeader = false,
+): NavItem[] {
+  return items.filter(
+    (i) =>
+      (!i.roles || i.roles.includes(role)) &&
+      (!i.teamLeaderOnly || isTeamLeader),
+  );
 }

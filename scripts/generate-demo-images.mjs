@@ -272,12 +272,33 @@ function shoplotScene(rng, gradId) {
   return s;
 }
 
+/** Vacant land plot with boundary fence and a sale sign. */
+function landScene(rng) {
+  let s = '';
+  // cleared earth plot (perspective trapezoid) sitting on the ground
+  s += `<polygon points="300,596 900,596 1015,762 185,762" fill="#cdb98a"/>`;
+  s += `<polygon points="300,596 900,596 1015,762 185,762" fill="#d8c69b" opacity="0.5"/>`;
+  s += `<polygon points="300,596 900,596 1015,762 185,762" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="16 12" opacity="0.7"/>`;
+  // boundary fence posts along the front edge
+  for (let i = 0; i <= 8; i++) {
+    const x = 185 + (i * (1015 - 185)) / 8;
+    s += `<rect x="${(x - 4).toFixed(0)}" y="700" width="8" height="62" rx="2" fill="#8a6b45"/>`;
+  }
+  // for-sale signboard
+  s += `<rect x="566" y="470" width="10" height="130" fill="#6b4a2b"/>`;
+  s += `<rect x="496" y="446" width="210" height="66" rx="6" fill="#1d4e7a"/>`;
+  s += `<text x="601" y="476" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="800" fill="#ffffff">TANAH</text>`;
+  s += `<text x="601" y="500" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="1" fill="#e7c875">UNTUK DIJUAL</text>`;
+  return s;
+}
+
 // Category → palette + subject
 const CATS = {
   project: { a1: '#1d4e7a', a2: '#3f86c4', b1: '#2a5d86', b2: '#4f93cf', subject: towerScene, label: 'PROJECT' },
   subsale: { a1: '#2f7d6b', a2: '#57b39a', b1: '#2f7d6b', b2: '#57b39a', subject: null, label: 'SUBSALE' },
   rental: { a1: '#3a6ea5', a2: '#6fa8d6', b1: '#4a7cae', b2: '#82b6dd', subject: midriseScene, label: 'RENTAL' },
   commercial: { a1: '#41566f', a2: '#6b8198', b1: '#41566f', b2: '#6b8198', subject: shoplotScene, label: 'COMMERCIAL' },
+  land: { a1: '#6b8f5a', a2: '#9cbf86', b1: '#6b8f5a', b2: '#9cbf86', subject: landScene, label: 'TANAH' },
 };
 
 /**
@@ -350,10 +371,6 @@ export function propertySvg({ title, area, category, index }) {
 
   <!-- Bottom scrim for legibility -->
   <rect y="${H - 250}" width="${W}" height="250" fill="url(#scrim-${gid})"/>
-
-  <!-- Category pill -->
-  <rect x="60" y="52" width="${70 + label.length * 12}" height="42" rx="21" fill="rgba(6,18,31,0.42)"/>
-  <text x="84" y="79" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="2" fill="#ffffff">${esc(label)}</text>
 
   <!-- Title + area -->
   <text x="70" y="${H - 96}" font-family="Inter, system-ui, sans-serif" font-size="50" font-weight="800" fill="#ffffff">${titleTspans}</text>
@@ -476,6 +493,22 @@ function run() {
     'utf8',
   );
   propertyCount++;
+
+  // Generic commercial + land heroes (for shop/office and land listings).
+  for (let i = 1; i <= 6; i++) {
+    const area = AREAS[(i * 3) % AREAS.length];
+    fs.writeFileSync(
+      path.join(PROPERTIES_DIR, `commercial-${pad2(i)}.svg`),
+      propertySvg({ title: `Shop Office, ${area}`, area, category: 'commercial', index: i }),
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(PROPERTIES_DIR, `land-${pad2(i)}.svg`),
+      propertySvg({ title: `Tanah Lot, ${area}`, area, category: 'land', index: i }),
+      'utf8',
+    );
+    propertyCount += 2;
+  }
 
   AGENT_INITIALS.forEach((initials, i) => {
     const svg = agentSvg({ initials, index: i + 1 });
