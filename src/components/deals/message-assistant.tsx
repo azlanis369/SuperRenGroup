@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Bot, MessageCircle, Copy, Check } from "lucide-react";
-import { toWaNumber } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useWhatsApp } from "@/components/whatsapp/whatsapp-provider";
 import { messagePack, type MsgCtx } from "@/lib/message-templates";
 import type { AgentStamp } from "@/lib/share";
 import {
@@ -38,9 +38,9 @@ export function MessageAssistant({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
   const { lang, t } = useLanguage();
+  const { open: openWhatsApp } = useWhatsApp();
   const ta = t.autobot;
 
-  const wa = toWaNumber(phone);
   const ctx: MsgCtx = { customerName, listingTitle, priceText, agent };
   const pack = messagePack(kind, status, ctx, lang);
 
@@ -81,14 +81,12 @@ export function MessageAssistant({
                 {it.text}
               </p>
               <div className="mt-2.5 flex gap-2">
-                <a
-                  href={`https://wa.me/${wa}?text=${encodeURIComponent(it.text)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openWhatsApp({ phone, text: it.text })}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
                 >
                   <MessageCircle className="h-4 w-4" /> {ta.send}
-                </a>
+                </button>
                 <button
                   onClick={() => copy(i, it.text)}
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
