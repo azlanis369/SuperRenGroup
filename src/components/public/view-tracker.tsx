@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { track } from "@/lib/analytics";
 
 /** Fire-and-forget view increment for a public listing (once per mount). */
 export function ViewTracker({ listingId }: { listingId: string }) {
@@ -8,6 +9,7 @@ export function ViewTracker({ listingId }: { listingId: string }) {
   useEffect(() => {
     if (fired.current) return;
     fired.current = true;
+    track("view_listing_detail", { listingId });
     const key = `viewed:${listingId}`;
     try {
       if (sessionStorage.getItem(key)) return;

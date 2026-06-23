@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DemoTag } from "@/components/demo-badge";
 import { QrCode } from "@/components/public/qr-code";
+import { TrackedLink } from "@/components/tracked-link";
 import { ListingCarousel } from "@/components/public/listing-carousel";
 import { ProfileShareButton } from "@/components/public/profile-share-button";
 
@@ -118,10 +119,10 @@ export default async function AgentProfilePage({
   ].filter((s) => s.url);
 
   const ctas = [
-    { label: "Saya Nak Jual Rumah", icon: Home, msg: `Salam ${firstName}, saya pemilik rumah di kawasan Ampang/KL dan ingin tahu anggaran harga pasaran serta cara tuan boleh bantu jualkan unit saya.` },
-    { label: "Saya Nak Sewakan Unit", icon: Key, msg: `Salam ${firstName}, saya ada unit untuk disewakan dan ingin tahu cara tuan boleh bantu cari tenant yang sesuai.` },
-    { label: "Saya Nak Cari Rumah", icon: Search, msg: `Salam ${firstName}, saya sedang mencari rumah sekitar Ampang/KL. Boleh bantu cadangkan unit yang sesuai dengan bajet dan keperluan saya?` },
-    { label: "Saya Nak Join Team", icon: Users, msg: `Salam ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang menyertai team hartanah tuan.` },
+    { label: "Saya Nak Jual Rumah", icon: Home, event: "profile_cta_sell" as const, msg: `Salam ${firstName}, saya pemilik rumah di kawasan Ampang/KL dan ingin tahu anggaran harga pasaran serta cara tuan boleh bantu jualkan unit saya.` },
+    { label: "Saya Nak Sewakan Unit", icon: Key, event: "profile_cta_rent" as const, msg: `Salam ${firstName}, saya ada unit untuk disewakan dan ingin tahu cara tuan boleh bantu cari tenant yang sesuai.` },
+    { label: "Saya Nak Cari Rumah", icon: Search, event: "profile_cta_buy" as const, msg: `Salam ${firstName}, saya sedang mencari rumah sekitar Ampang/KL. Boleh bantu cadangkan unit yang sesuai dengan bajet dan keperluan saya?` },
+    { label: "Saya Nak Join Team", icon: Users, event: "profile_cta_join_team" as const, msg: `Salam ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang menyertai team hartanah tuan.` },
   ];
 
   // JSON-LD — RealEstateAgent
@@ -219,9 +220,9 @@ export default async function AgentProfilePage({
                 const Icon = c.icon;
                 return (
                   <Button key={c.label} asChild variant="success" className="justify-start">
-                    <a href={intent(c.msg)} target="_blank" rel="noopener noreferrer">
+                    <TrackedLink event={c.event} href={intent(c.msg)} target="_blank" rel="noopener noreferrer">
                       <Icon className="h-4 w-4" /> {c.label}
-                    </a>
+                    </TrackedLink>
                   </Button>
                 );
               })}
@@ -231,16 +232,16 @@ export default async function AgentProfilePage({
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {profile.whatsapp ? (
                 <Button asChild size="sm">
-                  <a href={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)} target="_blank" rel="noopener noreferrer">
+                  <TrackedLink event="click_whatsapp_profile" href={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-4 w-4" /> WhatsApp
-                  </a>
+                  </TrackedLink>
                 </Button>
               ) : null}
               {profile.phone ? (
                 <Button asChild variant="outline" size="sm">
-                  <a href={`tel:${toWaNumber(profile.phone)}`}>
+                  <TrackedLink event="click_call_profile" href={`tel:${toWaNumber(profile.phone)}`}>
                     <Phone className="h-4 w-4" /> Call
-                  </a>
+                  </TrackedLink>
                 </Button>
               ) : null}
               {profile.email ? (
@@ -370,9 +371,9 @@ export default async function AgentProfilePage({
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button asChild variant="gold">
-              <a href={intent(`Salam ${firstName}, saya ingin berbincang tentang hartanah.`)} target="_blank" rel="noopener noreferrer">
+              <TrackedLink event="click_whatsapp_profile" href={intent(`Salam ${firstName}, saya ingin berbincang tentang hartanah.`)} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> WhatsApp {firstName}
-              </a>
+              </TrackedLink>
             </Button>
           </div>
         </section>

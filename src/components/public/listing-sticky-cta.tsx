@@ -2,6 +2,7 @@
 
 import { MessageCircle, Phone } from "lucide-react";
 import { ShareButton } from "@/components/listings/share-button";
+import { track } from "@/lib/analytics";
 import type { AgentStamp } from "@/lib/share";
 
 type ShareListing = {
@@ -44,6 +45,7 @@ export function ListingStickyCta({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("click_whatsapp_listing", { listingId: listing.id })}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
           >
             <MessageCircle className="h-4 w-4" /> WhatsApp
@@ -52,6 +54,7 @@ export function ListingStickyCta({
         {showPhone && tel ? (
           <a
             href={`tel:${tel}`}
+            onClick={() => track("click_call_listing", { listingId: listing.id })}
             className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
           >
             <Phone className="h-4 w-4" /> Call

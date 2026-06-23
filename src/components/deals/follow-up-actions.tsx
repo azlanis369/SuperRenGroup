@@ -3,6 +3,7 @@
 import { Phone, MessageSquare } from "lucide-react";
 import { buildFollowUpMessage, type AgentStamp } from "@/lib/share";
 import { useLanguage } from "@/contexts/language-context";
+import { track } from "@/lib/analytics";
 import { MessageAssistant } from "@/components/deals/message-assistant";
 
 /**
@@ -47,14 +48,20 @@ export function FollowUpActions({
       />
       <a
         href={`tel:${tel}`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          track("click_call_deal", { kind, status });
+        }}
         className="flex items-center justify-center gap-1 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
       >
         <Phone className="h-3.5 w-3.5" /> Call
       </a>
       <a
         href={`sms:${tel}?body=${smsBody}`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          track("send_sms_deal", { kind, status });
+        }}
         className="flex items-center justify-center gap-1 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
       >
         <MessageSquare className="h-3.5 w-3.5" /> SMS

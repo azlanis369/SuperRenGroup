@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bot, MessageCircle, Copy, Check } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useWhatsApp } from "@/components/whatsapp/whatsapp-provider";
+import { track } from "@/lib/analytics";
 import { messagePack, type MsgCtx, type Tone } from "@/lib/message-templates";
 import type { AgentStamp } from "@/lib/share";
 import {
@@ -48,12 +49,18 @@ export function MessageAssistant({
 
   async function copy(i: number, text: string) {
     await navigator.clipboard.writeText(text);
+    track("copy_autobot_message", { kind, status, tone });
     setCopied(i);
     setTimeout(() => setCopied(null), 1500);
   }
 
+  function onOpenChange(o: boolean) {
+    if (o) track("click_autobot", { kind, status });
+    setOpen(o);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <button className="flex w-full items-center justify-center gap-1 rounded-lg bg-emerald-500 px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-600">
           <Bot className="h-3.5 w-3.5" /> Autobot
@@ -106,7 +113,10 @@ export function MessageAssistant({
               </p>
               <div className="mt-2.5 flex gap-2">
                 <button
-                  onClick={() => openWhatsApp({ phone, text: it.text })}
+                  onClick={() => {
+                    track("click_whatsapp_followup", { kind, status, tone });
+                    openWhatsApp({ phone, text: it.text });
+                  }}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
                 >
                   <MessageCircle className="h-4 w-4" /> {ta.send}
