@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,12 @@ import {
 } from "@/lib/validations/profile";
 import { saveProfile } from "@/lib/actions/profile";
 import { compressImage, uploadToStorage, validateImage } from "@/lib/upload";
+import { LOCAL_DEMO } from "@/lib/demo-mode";
+import {
+  getDemoPhoto,
+  setDemoPhoto,
+  fileToResizedDataUrl,
+} from "@/lib/demo-photo";
 import { SPECIALIZATIONS } from "@/lib/constants";
 import type { AgentProfileRow } from "@/lib/database.types";
 import { cn } from "@/lib/utils";
@@ -90,6 +96,15 @@ export function ProfileForm({
   });
 
   const fullName = watch("full_name");
+  const userId = profile?.user_id;
+
+  // In demo mode, restore a previously saved photo from localStorage.
+  useEffect(() => {
+    if (LOCAL_DEMO && userId) {
+      const saved = getDemoPhoto(userId);
+      if (saved) setPhotoUrl(saved);
+    }
+  }, [userId]);
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -102,9 +117,15 @@ export function ProfileForm({
     setUploading(true);
     setError(null);
     try {
-      const compressed = await compressImage(file);
-      const { url } = await uploadToStorage(compressed, "avatars");
-      setPhotoUrl(url);
+      if (LOCAL_DEMO) {
+        // No storage backend — keep a resized data URL we can persist locally.
+        const dataUrl = await fileToResizedDataUrl(file);
+        setPhotoUrl(dataUrl);
+      } else {
+        const compressed = await compressImage(file);
+        const { url } = await uploadToStorage(compressed, "avatars");
+        setPhotoUrl(url);
+      }
     } catch {
       setError("Gagal memuat naik foto. Pastikan bucket storage wujud.");
     } finally {
@@ -124,13 +145,17 @@ export function ProfileForm({
         setError(res.error);
         return;
       }
-      // Persist photo url if changed (separate lightweight update).
+      // Persist photo if changed.
       if (photoUrl && photoUrl !== profile?.profile_photo_url) {
-        await fetch("/api/profile/photo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: photoUrl }),
-        }).catch(() => {});
+        if (LOCAL_DEMO) {
+          if (userId) setDemoPhoto(userId, photoUrl);
+        } else {
+          await fetch("/api/profile/photo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: photoUrl }),
+          }).catch(() => {});
+        }
       }
       setSaved(true);
       if (mode === "onboarding") {
