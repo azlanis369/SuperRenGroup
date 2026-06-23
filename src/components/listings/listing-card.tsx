@@ -58,7 +58,9 @@ export function ListingCard({
           <StatusBadge status={listing.status} />
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-          <p className="text-lg font-bold text-white drop-shadow">{priceText}</p>
+          <p className="whitespace-nowrap text-lg font-bold tabular-nums text-white drop-shadow">
+            {priceText}
+          </p>
         </div>
       </div>
 
