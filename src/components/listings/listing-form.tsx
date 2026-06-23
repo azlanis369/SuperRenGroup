@@ -94,6 +94,17 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
+  async function saveDraft() {
+    const valid = await form.trigger(["category", "title", "property_type", "area"]);
+    if (!valid) {
+      setStep(0);
+      return;
+    }
+    form.setValue("status", "draft");
+    form.setValue("visibility", "private");
+    form.handleSubmit(submit)();
+  }
+
   function submit(values: ListingFormValues) {
     setError(null);
     const cleanMedia = media
@@ -154,6 +165,10 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
         ))}
       </div>
 
+      <p className="text-xs font-medium text-muted-foreground">
+        Langkah {step + 1} daripada {STEPS.length} · {STEPS[step]}
+      </p>
+
       <form onSubmit={form.handleSubmit(submit)}>
         <Card className="p-4 sm:p-6">
           {step === 0 && <StepBasic form={form} />}
@@ -169,7 +184,7 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
           </p>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="sticky bottom-16 z-30 -mx-4 mt-4 flex items-center justify-between gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none lg:bottom-0">
           <Button
             type="button"
             variant="ghost"
@@ -179,16 +194,28 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
             <ChevronLeft className="h-4 w-4" /> Kembali
           </Button>
 
-          {step < STEPS.length - 1 ? (
-            <Button type="button" onClick={next}>
-              Seterusnya <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner /> : <Check className="h-4 w-4" />}
-              {mode === "create" ? "Cipta Listing" : "Simpan"}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {mode === "create" ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={saveDraft}
+                disabled={isPending}
+              >
+                Simpan Draft
+              </Button>
+            ) : null}
+            {step < STEPS.length - 1 ? (
+              <Button type="button" onClick={next}>
+                Seterusnya <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Spinner /> : <Check className="h-4 w-4" />}
+                {mode === "create" ? "Cipta Listing" : "Simpan"}
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </div>
