@@ -9,12 +9,13 @@ import { demoUsers } from "@/lib/demo-data/dataset";
  *      /enter/team-leader    -> Amirul Nasyriq landing on /team
  */
 const ENTRY: Record<string, { role: string; to: string }> = {
-  "group-manager": { role: "user-admin", to: "/admin" },
-  gm: { role: "user-admin", to: "/admin" },
-  admin: { role: "user-admin", to: "/admin" },
-  amirul: { role: "user-azlan", to: "/dashboard" },
+  // Amirul Nasyriq = Group Team Manager (the primary persona).
+  "group-manager": { role: "user-azlan", to: "/admin" },
+  gm: { role: "user-azlan", to: "/admin" },
+  amirul: { role: "user-azlan", to: "/admin" },
   azlan: { role: "user-azlan", to: "/dashboard" },
   "team-leader": { role: "user-azlan", to: "/team" },
+  admin: { role: "user-admin", to: "/admin" },
   "super-admin": { role: "user-superadmin", to: "/admin" },
 };
 
