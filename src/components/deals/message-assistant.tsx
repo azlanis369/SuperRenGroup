@@ -1,0 +1,112 @@
+"use client";
+
+import { useState } from "react";
+import { Bot, MessageCircle, Copy, Check } from "lucide-react";
+import { toWaNumber } from "@/lib/utils";
+import { messagePack, type MsgCtx } from "@/lib/message-templates";
+import type { AgentStamp } from "@/lib/share";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+/**
+ * "Autobot" — drafts stage-aware WhatsApp messages for a lead/deal and guides
+ * the agent on the next best step. One tap to send via WhatsApp (signed).
+ */
+export function MessageAssistant({
+  phone,
+  kind,
+  status,
+  customerName,
+  listingTitle,
+  priceText,
+  agent,
+}: {
+  phone: string;
+  kind: "deal" | "lead";
+  status: string;
+  customerName?: string | null;
+  listingTitle?: string | null;
+  priceText?: string | null;
+  agent?: AgentStamp;
+}) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState<number | null>(null);
+
+  const wa = toWaNumber(phone);
+  const ctx: MsgCtx = { customerName, listingTitle, priceText, agent };
+  const pack = messagePack(kind, status, ctx);
+
+  async function copy(i: number, text: string) {
+    await navigator.clipboard.writeText(text);
+    setCopied(i);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="flex w-full items-center justify-center gap-1 rounded-lg bg-emerald-500 px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-600">
+          <Bot className="h-3.5 w-3.5" /> Autobot
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-emerald-500" /> Pembantu Mesej (Autobot)
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Guidance for this stage */}
+        <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
+          <span className="font-semibold">💡 Panduan: </span>
+          {pack.tip}
+        </div>
+
+        {/* Drafted messages */}
+        <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+          {pack.items.map((it, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {it.label}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
+                {it.text}
+              </p>
+              <div className="mt-2.5 flex gap-2">
+                <a
+                  href={`https://wa.me/${wa}?text=${encodeURIComponent(it.text)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
+                >
+                  <MessageCircle className="h-4 w-4" /> Hantar WhatsApp
+                </a>
+                <button
+                  onClick={() => copy(i, it.text)}
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {copied === i ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  Salin
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Setiap mesej ditandatangani dengan stamp anda secara automatik. Anda
+          boleh edit selepas ia dibuka di WhatsApp.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
