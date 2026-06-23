@@ -180,16 +180,16 @@ function tierFor(): Tier {
 
 const agents: Agent[] = [];
 
-// 0 — Azlan (primary persona)
+// 0 — Amirul Nasyriq (primary persona)
 agents.push({
   key: "azlan",
   userId: "user-azlan",
-  name: "Azlan Zakaria",
+  name: "Amirul Nasyriq",
   status: "active",
   tier: "top",
   area: "Ampang",
   sectors: ["subsale", "rental"],
-  ren: "REN 09876",
+  ren: "REN 39593",
   photo: "/demo/agents/agent-azlan.svg",
 });
 
@@ -294,24 +294,24 @@ export const demoUsers: UserRow[] = [
 const AGENCY_NAME = "Chester Properties HQ";
 const TITLES = ["Real Estate Negotiator", "Senior Negotiator", "Property Consultant", "Sales Advisor"];
 
-/** Azlan's profile — the primary agent, with real contact details. */
+/** Primary agent profile (Amirul Nasyriq) — with real contact details. */
 export const azlanProfile: AgentProfileRow = {
   id: "profile-azlan",
   user_id: "user-azlan",
-  full_name: "Azlan Zakaria",
-  display_name: "Azlan Zakaria",
-  slug: "azlan-zakaria",
+  full_name: "Amirul Nasyriq",
+  display_name: "Amirul Nasyriq",
+  slug: "amirul-nasyriq",
   profile_photo_url: "/demo/agents/agent-azlan.svg",
-  ren_number: "REN 09876",
+  ren_number: "REN 39593",
   agency_name: AGENCY_NAME,
   title: "Team Leader · Real Estate Negotiator",
-  phone: "+60 17-690 0696",
-  whatsapp: "+60176900696",
-  email: "azlan@superren.demo",
+  phone: "+60 19-823 6383",
+  whatsapp: "+60198236383",
+  email: "amirul@superren.demo",
   bio: "Team Leader di Super Ren Group (Chester Properties HQ). Ejen hartanah kediaman & komersial di Ampang dan sekitar Kuala Lumpur — mengetuai pasukan 11 ejen.",
   service_areas: ["Ampang", "Pandan Indah", "Pandan Jaya", "Ampang Hilir", "Hulu Klang"],
   specialization: ["subsale", "rental", "commercial"],
-  facebook_url: "https://facebook.com/azlan.ibnuzakaria",
+  facebook_url: "https://www.facebook.com/amirulnasyriq.bahri",
   instagram_url: null,
   tiktok_url: null,
   website_url: null,
@@ -761,7 +761,7 @@ for (const a of agents.filter((x) => x.status !== "active").slice(0, 8)) {
     id: `${id}-sd`, listing_id: id, asking_price: 5150000, valuation_estimate: 5000000,
     occupancy_status: "Vacant", maintenance_fee: 0, renovation_info: "Bare unit / original condition",
     facing_direction: "North", title_type: "Strata", viewing_availability: "Dengan temujanji",
-    co_broke_allowed: true, private_commission_notes: "Co-broke 50/50. Hubungi Azlan untuk butiran.",
+    co_broke_allowed: true, private_commission_notes: "Co-broke 50/50. Hubungi Amirul untuk butiran.",
   };
 }
 

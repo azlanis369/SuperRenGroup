@@ -183,10 +183,10 @@ export function ProfileForm({
 
       <Section title="Maklumat asas">
         <Field label="Nama penuh" error={errors.full_name?.message} required>
-          <Input {...register("full_name")} placeholder="Cth: Azlan Zakaria" />
+          <Input {...register("full_name")} placeholder="Cth: Amirul Nasyriq" />
         </Field>
         <Field label="Nama paparan" error={errors.display_name?.message}>
-          <Input {...register("display_name")} placeholder="Cth: Azlan Z." />
+          <Input {...register("display_name")} placeholder="Cth: Amirul N." />
         </Field>
         <Field label="Nombor REN" error={errors.ren_number?.message}>
           <Input {...register("ren_number")} placeholder="REN 12345" />
