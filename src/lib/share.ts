@@ -93,14 +93,19 @@ export function buildWhatsAppShareUrl(
 export function buildInquiryWhatsAppUrl(
   agentPhone: string,
   listing: ShareListing,
+  lang: Lang = "ms",
 ): string {
   const url = absoluteUrl(`/listing/${listing.slug}`);
-  const text = encodeURIComponent(
-    `Hi, saya berminat dengan listing ini:\n\n${listing.title}\n${priceText(
-      listing,
-    )}\n${listing.area}\n\n${url}`,
-  );
-  return `https://wa.me/${toWaNumber(agentPhone)}?text=${text}`;
+  const body =
+    lang === "en"
+      ? `Hi, I'm interested in this listing: ${listing.title} (${priceText(
+          listing,
+          lang,
+        )}, ${listing.area}). Could you share more details and arrange a viewing?\n\n${url}`
+      : `Salam, saya berminat dengan listing ${listing.title} (${priceText(
+          listing,
+        )}, ${listing.area}). Boleh kongsi detail dan susun viewing?\n\n${url}`;
+  return `https://wa.me/${toWaNumber(agentPhone)}?text=${encodeURIComponent(body)}`;
 }
 
 /** Telegram share — copy/share text (incl. stamp) + share intent URL. */
