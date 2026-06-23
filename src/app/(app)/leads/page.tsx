@@ -180,6 +180,8 @@ export default async function LeadsPage({
                 {lead.phone ? (
                   <FollowUpActions
                     phone={lead.phone}
+                    kind="lead"
+                    status={lead.status}
                     customerName={lead.name}
                     listingTitle={
                       lead.listing_id

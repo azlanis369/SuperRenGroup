@@ -205,8 +205,11 @@ export function DealsBoard({
                         </p>
                         <FollowUpActions
                           phone={deal.customer_phone}
+                          kind="deal"
+                          status={deal.deal_status}
                           customerName={deal.customer_name}
                           listingTitle={title}
+                          priceText={formatPrice(price)}
                           agent={agent}
                         />
                       </>
