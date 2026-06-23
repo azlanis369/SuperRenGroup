@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
@@ -7,6 +8,10 @@ import { profileSchema } from "@/lib/validations/profile";
 import { slugify, uniqueSlug } from "@/lib/utils";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { demoAgents } from "@/lib/demo-data/dataset";
+import {
+  PROFILE_OVERRIDE_COOKIE,
+  buildProfileOverride,
+} from "@/lib/demo-data/profile-override";
 
 export type ActionResult =
   | { ok: true; slug?: string }
@@ -27,29 +32,44 @@ export async function saveProfile(input: unknown): Promise<ActionResult> {
   const data = parsed.data;
 
   if (LOCAL_DEMO) {
-    // Persist edits onto the in-memory agent profile (dev session only).
     const idx = demoAgents.findIndex((a) => a.user_id === user.id);
+    const fields = {
+      full_name: data.full_name,
+      display_name: data.display_name || null,
+      ren_number: data.ren_number || null,
+      agency_name: data.agency_name || null,
+      title: data.title || null,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      email: data.email,
+      bio: data.bio || null,
+      service_areas: data.service_areas,
+      specialization: data.specialization,
+      facebook_url: data.facebook_url || null,
+      instagram_url: data.instagram_url || null,
+      tiktok_url: data.tiktok_url || null,
+      website_url: data.website_url || null,
+      telegram_username: data.telegram_username || null,
+      is_profile_public: data.is_profile_public,
+    };
+    // Best-effort in-memory update (helps within a single dev process).
     if (idx >= 0) {
       demoAgents[idx] = {
         ...demoAgents[idx],
-        full_name: data.full_name,
-        display_name: data.display_name || null,
-        ren_number: data.ren_number || null,
-        agency_name: data.agency_name || null,
-        title: data.title || null,
-        phone: data.phone,
-        whatsapp: data.whatsapp,
-        email: data.email,
-        bio: data.bio || null,
-        service_areas: data.service_areas,
-        specialization: data.specialization,
-        is_profile_public: data.is_profile_public,
+        ...fields,
         updated_at: new Date().toISOString(),
       };
     }
+    // Durable across requests: persist edits in a cookie the server reads back.
+    const override = buildProfileOverride(user.id, fields);
+    (await cookies()).set(PROFILE_OVERRIDE_COOKIE, JSON.stringify(override), {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
     revalidatePath("/profile");
     revalidatePath("/dashboard");
-    return { ok: true, slug: demoAgents[idx]?.slug };
+    return { ok: true, slug: demoAgents[idx]?.slug ?? user.profile?.slug };
   }
 
   const supabase = await createClient();

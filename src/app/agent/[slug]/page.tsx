@@ -25,7 +25,7 @@ import { SEGMENT_ORDER, SEGMENT_LABELS, segmentOf } from "@/lib/segment";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { teamMemberIds } from "@/lib/demo-data/dataset";
 import { Logo } from "@/components/brand";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DemoAvatar } from "@/components/public/demo-avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DemoTag } from "@/components/demo-badge";
@@ -177,14 +177,13 @@ export default async function AgentProfilePage({
           <div className="h-24 bg-gradient-to-r from-primary to-primary/80" />
           <div className="px-5 pb-5">
             <div className="-mt-12 flex items-end justify-between">
-              <Avatar className="h-24 w-24 border-4 border-card shadow-md">
-                {profile.profile_photo_url ? (
-                  <AvatarImage src={profile.profile_photo_url} alt={name} />
-                ) : null}
-                <AvatarFallback className="text-2xl">
-                  {name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-                </AvatarFallback>
-              </Avatar>
+              <DemoAvatar
+                userId={profile.user_id}
+                src={profile.profile_photo_url}
+                name={name}
+                className="h-24 w-24 border-4 border-card shadow-md"
+                fallbackClassName="text-2xl"
+              />
               {isDemo ? <DemoTag>Demo Profile</DemoTag> : null}
             </div>
 

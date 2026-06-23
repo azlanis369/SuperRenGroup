@@ -2,13 +2,24 @@ import { createClient } from "@/lib/supabase/server";
 import type { AgentProfileRow, ListingRow } from "@/lib/database.types";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { demoGetPublicAgent, demoGetListingAgent } from "@/lib/demo-data/queries";
+import {
+  applyProfileOverride,
+  readProfileOverride,
+} from "@/lib/demo-data/profile-override";
 
 /** Public agent profile by slug, plus their public listings. */
 export async function getPublicAgent(slug: string): Promise<{
   profile: AgentProfileRow;
   listings: ListingRow[];
 } | null> {
-  if (LOCAL_DEMO) return demoGetPublicAgent(slug);
+  if (LOCAL_DEMO) {
+    const res = demoGetPublicAgent(slug);
+    if (!res) return null;
+    const profile = applyProfileOverride(res.profile, await readProfileOverride());
+    // Visibility may have been toggled off via the override.
+    if (!profile.is_profile_public) return null;
+    return { ...res, profile };
+  }
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("agent_profiles")

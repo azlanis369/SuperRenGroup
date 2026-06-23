@@ -6,6 +6,10 @@ import { ROLES, type Role } from "@/lib/constants";
 import type { AgentProfileRow, UserRow } from "@/lib/database.types";
 import { LOCAL_DEMO, DEMO_ROLE_COOKIE } from "@/lib/demo-mode";
 import { demoUsers, demoAgents } from "@/lib/demo-data/dataset";
+import {
+  applyProfileOverride,
+  readProfileOverride,
+} from "@/lib/demo-data/profile-override";
 
 export type SessionUser = {
   id: string;
@@ -60,8 +64,9 @@ async function demoSessionUser(): Promise<SessionUser> {
     (want === "agent"
       ? demoUsers.find((u) => u.id === "user-azlan")!
       : demoUsers.find((u) => u.id === "user-azlan")!);
-  const profile =
+  const base =
     demoAgents.find((a) => a.user_id === user.id) ?? adminProfile(user);
+  const profile = applyProfileOverride(base, await readProfileOverride());
   return {
     id: user.id,
     email: user.email,
