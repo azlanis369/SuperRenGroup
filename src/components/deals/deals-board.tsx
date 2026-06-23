@@ -28,9 +28,19 @@ const DOT: Record<DealStatus, string> = {
 type StatusFilter = DealStatus | "all";
 type TypeFilter = "all" | "sale" | "rental";
 type SortKey = "recent" | "value";
+type QuickFilter = "none" | "due" | "stale" | "high";
+
+const HIGH_VALUE = 1_000_000;
+const STALE_DAYS = 30;
+const OPEN_STATUSES = ["booked", "pending"];
 
 function dealPrice(d: DealRow): number {
   return Number(d.deal_type === "rental" ? d.rental_price : d.sold_price) || 0;
+}
+
+function ageDays(iso: string | null): number {
+  if (!iso) return 0;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
 
 export function DealsBoard({
@@ -52,10 +62,27 @@ export function DealsBoard({
   const [status, setStatus] = useState<StatusFilter>(validInitial);
   const [type, setType] = useState<TypeFilter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [quick, setQuick] = useState<QuickFilter>("none");
   const [q, setQ] = useState("");
   const { t } = useLanguage();
   const td = t.deals;
   const statusLabel = t.dealStatusLabel;
+
+  function matchesQuick(d: DealRow): boolean {
+    switch (quick) {
+      case "due":
+        return OPEN_STATUSES.includes(d.deal_status);
+      case "stale":
+        return (
+          OPEN_STATUSES.includes(d.deal_status) &&
+          ageDays(d.booking_date ?? d.created_at) > STALE_DAYS
+        );
+      case "high":
+        return dealPrice(d) >= HIGH_VALUE;
+      default:
+        return true;
+    }
+  }
 
   // counts per status (respecting type + search, but not the status filter itself)
   const base = useMemo(() => {
@@ -80,7 +107,10 @@ export function DealsBoard({
   }, [base]);
 
   const rows = useMemo(() => {
-    const list = base.filter((d) => status === "all" || d.deal_status === status);
+    const list = base.filter(
+      (d) =>
+        (status === "all" || d.deal_status === status) && matchesQuick(d),
+    );
     return list.sort((a, b) =>
       sort === "value"
         ? dealPrice(b) - dealPrice(a)
@@ -88,7 +118,8 @@ export function DealsBoard({
             a.closed_date ?? a.booking_date ?? "",
           ),
     );
-  }, [base, status, sort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, status, sort, quick]);
 
   return (
     <div className="space-y-4">
@@ -146,6 +177,19 @@ export function DealsBoard({
         </div>
       </div>
 
+      {/* Quick filters */}
+      <div className="flex flex-wrap gap-2">
+        <Chip active={quick === "due"} onClick={() => setQuick(quick === "due" ? "none" : "due")}>
+          🔔 {td.quickDue}
+        </Chip>
+        <Chip active={quick === "stale"} onClick={() => setQuick(quick === "stale" ? "none" : "stale")}>
+          ⏳ {td.quickStale}
+        </Chip>
+        <Chip active={quick === "high"} onClick={() => setQuick(quick === "high" ? "none" : "high")}>
+          💎 {td.quickHigh}
+        </Chip>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         {td.showing(rows.length, deals.length)}
       </p>
@@ -197,6 +241,16 @@ export function DealsBoard({
                   </span>
                 </p>
 
+                {/* Next action — what to do now for this deal */}
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-gold/10 px-2.5 py-2 text-xs">
+                  <span className="font-semibold text-gold-foreground">
+                    → {td.nextActionLabel}:
+                  </span>
+                  <span className="text-foreground">
+                    {td.nextAction[deal.deal_status]}
+                  </span>
+                </div>
+
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
                   {deal.booking_date ? (
                     <span>{td.booking}: {formatDate(deal.booking_date)}</span>
@@ -204,6 +258,7 @@ export function DealsBoard({
                   {deal.closed_date ? (
                     <span>{td.closedOn}: {formatDate(deal.closed_date)}</span>
                   ) : null}
+                  <span>{td.lastUpdate(formatDate(deal.updated_at))}</span>
                 </div>
 
                 {deal.customer_name || deal.customer_phone ? (

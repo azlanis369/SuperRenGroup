@@ -105,6 +105,19 @@ const ms = {
     closedOn: "Closed",
     breakdownFoot: (v: string, n: number) =>
       `Nilai jualan closed: ${v} · ${n} deal keseluruhan`,
+    nextActionLabel: "Tindakan seterusnya",
+    nextAction: {
+      booked: "Sahkan dokumen & deposit",
+      pending: "Follow-up status loan/SPA",
+      closed: "Minta testimoni / rujukan",
+      cancelled: "Tawar pilihan lain",
+      refund: "Hantar update refund",
+      others: "Follow-up am",
+    },
+    quickDue: "Perlu Follow-up",
+    quickStale: "Tiada Update",
+    quickHigh: "Nilai Tinggi",
+    lastUpdate: (s: string) => `Kemas kini: ${s}`,
   },
   leads: {
     title: "Petunjuk Jualan",
@@ -238,6 +251,14 @@ const ms = {
     send: "Hantar WhatsApp",
     copy: "Salin",
     foot: "Setiap mesej ditandatangani dengan stamp anda secara automatik. Anda boleh edit selepas ia dibuka di WhatsApp.",
+    toneLabel: "Gaya mesej",
+    tone: {
+      mesra: "Mesra",
+      formal: "Formal",
+      ringkas: "Ringkas",
+      lembut: "Lembut",
+      urgent: "Urgent",
+    },
   },
   share: {
     title: "Kongsi listing",
@@ -384,6 +405,19 @@ const en: typeof ms = {
     closedOn: "Closed",
     breakdownFoot: (v: string, n: number) =>
       `Closed sales value: ${v} · ${n} deals total`,
+    nextActionLabel: "Next action",
+    nextAction: {
+      booked: "Confirm documents & deposit",
+      pending: "Follow up loan/SPA status",
+      closed: "Ask for testimonial / referral",
+      cancelled: "Offer alternatives",
+      refund: "Send refund update",
+      others: "General follow-up",
+    },
+    quickDue: "Due Follow-up",
+    quickStale: "No Recent Update",
+    quickHigh: "High Value",
+    lastUpdate: (s: string) => `Updated: ${s}`,
   },
   leads: {
     title: "Leads",
@@ -517,6 +551,14 @@ const en: typeof ms = {
     send: "Send WhatsApp",
     copy: "Copy",
     foot: "Every message is auto-signed with your stamp. You can edit it once it opens in WhatsApp.",
+    toneLabel: "Message tone",
+    tone: {
+      mesra: "Friendly",
+      formal: "Formal",
+      ringkas: "Concise",
+      lembut: "Gentle",
+      urgent: "Urgent",
+    },
   },
   share: {
     title: "Share listing",
