@@ -275,11 +275,12 @@ export function teamMemberIds(leaderId: string): string[] {
 // ---------------------------------------------------------------------------
 export const demoUsers: UserRow[] = [
   { id: "user-superadmin", email: "superadmin@superren.demo", role: "super_admin", status: "active", created_at: daysAgoISO(400), last_login_at: NOW_ISO },
-  { id: "user-admin", email: "nasyriq@superren.demo", role: "admin", status: "active", created_at: daysAgoISO(380), last_login_at: NOW_ISO },
+  { id: "user-admin", email: "admin@superren.demo", role: "admin", status: "active", created_at: daysAgoISO(380), last_login_at: NOW_ISO },
   ...agents.map((a) => ({
     id: a.userId,
     email: `${a.key}@superren.demo`,
-    role: "agent" as const,
+    // Amirul Nasyriq (user-azlan) is the Group Team Manager.
+    role: (a.userId === "user-azlan" ? "admin" : "agent") as UserRow["role"],
     status: a.status,
     created_at: daysAgoISO(between(60, 360)),
     last_login_at:
@@ -304,11 +305,11 @@ export const azlanProfile: AgentProfileRow = {
   profile_photo_url: "/demo/agents/agent-azlan.svg",
   ren_number: "REN 39593",
   agency_name: AGENCY_NAME,
-  title: "Team Leader · Real Estate Negotiator",
+  title: "Group Team Manager · Chester Properties HQ",
   phone: "+60 19-823 6383",
   whatsapp: "+60198236383",
   email: "amirul@superren.demo",
-  bio: "Team Leader di Super Ren Group (Chester Properties HQ). Ejen hartanah kediaman & komersial di Ampang dan sekitar Kuala Lumpur — mengetuai pasukan 11 ejen.",
+  bio: "Group Team Manager Super Ren Group di bawah Chester Properties HQ. Menerajui pasukan ejen hartanah serta turut khidmat kediaman & komersial di Ampang dan sekitar Kuala Lumpur.",
   service_areas: ["Ampang", "Pandan Indah", "Pandan Jaya", "Ampang Hilir", "Hulu Klang"],
   specialization: ["subsale", "rental", "commercial"],
   facebook_url: "https://www.facebook.com/amirulnasyriq.bahri",

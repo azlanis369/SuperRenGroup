@@ -14,8 +14,7 @@ const AGENTS = [
 ];
 
 const PRIMARY = [
-  { id: "user-azlan", name: "Amirul Nasyriq", role: "Ejen utama" },
-  { id: "user-admin", name: "Nasyriq", role: "Group Manager" },
+  { id: "user-azlan", name: "Amirul Nasyriq", role: "Group Team Manager" },
 ];
 
 async function setPersona(role: string) {
