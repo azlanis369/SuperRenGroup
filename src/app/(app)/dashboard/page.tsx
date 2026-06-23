@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getDashboardStats, getSwot, getAgentStanding } from "@/lib/data/stats";
+import { getLeads } from "@/lib/data/leads";
+import { getDeals } from "@/lib/data/deals";
+import { getViewings } from "@/lib/data/viewings";
 import { CATEGORY_LABELS, LISTING_STATUS_LABELS } from "@/lib/constants";
 import { getDict } from "@/lib/i18n/server";
 import { formatCompact, formatPrice } from "@/lib/utils";
@@ -27,6 +30,7 @@ import { DealStatusBreakdown } from "@/components/dashboard/deal-status-breakdow
 import { AgentStandingCard } from "@/components/dashboard/agent-standing";
 import { AgentLeaderboard } from "@/components/admin/leaderboard";
 import { SwotPanel } from "@/components/dashboard/swot-panel";
+import { DailyActions } from "@/components/dashboard/daily-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DemoBadge } from "@/components/demo-badge";
@@ -38,13 +42,36 @@ export default async function DashboardPage() {
   const admin = isAdmin(user.role);
   const scope = admin ? {} : { ownerId: user.id };
 
-  const [stats, swot, standing, dict] = await Promise.all([
-    getDashboardStats(scope),
-    getSwot(scope),
-    admin ? Promise.resolve(null) : getAgentStanding(user.id),
-    getDict(),
-  ]);
+  const [stats, swot, standing, dict, leadsRes, dealsRes, viewings] =
+    await Promise.all([
+      getDashboardStats(scope),
+      getSwot(scope),
+      admin ? Promise.resolve(null) : getAgentStanding(user.id),
+      getDict(),
+      getLeads({}),
+      getDeals(scope),
+      getViewings(scope),
+    ]);
   const t = dict.dashboard;
+
+  // Daily action counts — what needs the agent's attention now.
+  const scopedLeads = leadsRes.leads.filter(
+    (l) => admin || l.agent_id === user.id,
+  );
+  const leadsToFollowUp = scopedLeads.filter((l) =>
+    ["new", "contacted"].includes(l.status),
+  ).length;
+  const dealsNeedingAction = dealsRes.deals.filter((d) =>
+    ["pending", "booked"].includes(d.deal_status),
+  ).length;
+  const now = Date.now();
+  const viewingsPending = viewings.filter((v) => {
+    const ts = new Date(v.scheduled_at).getTime();
+    return (
+      (v.status === "scheduled" || v.status === "rescheduled") &&
+      ts <= now + 86400000 // overdue or within the next 24h
+    );
+  }).length;
 
   const statusData = stats.byStatus
     .map((s) => ({ label: LISTING_STATUS_LABELS[s.status], count: s.count }))
@@ -94,6 +121,40 @@ export default async function DashboardPage() {
         <AgentStandingCard standing={standing} firstName={firstName} />
       ) : null}
 
+      {/* Daily action centre */}
+      <DailyActions
+        title={t.dailyTitle}
+        emptyLabel={t.dailyEmpty}
+        items={[
+          {
+            label: t.dailyLeads(leadsToFollowUp),
+            count: leadsToFollowUp,
+            href: "/leads",
+            icon: Users,
+          },
+          {
+            label: t.dailyDeals(dealsNeedingAction),
+            count: dealsNeedingAction,
+            href: "/deals?status=booked",
+            icon: CalendarCheck,
+            tone: "gold",
+          },
+          {
+            label: t.dailyViewings(viewingsPending),
+            count: viewingsPending,
+            href: "/viewings",
+            icon: Clock,
+          },
+          {
+            label: t.dailyListings(stats.staleListings),
+            count: stats.staleListings,
+            href: "/listings",
+            icon: Building2,
+            tone: "danger",
+          },
+        ]}
+      />
+
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard
@@ -101,6 +162,7 @@ export default async function DashboardPage() {
           value={stats.activeListings}
           hint={t.totalListingsHint(stats.totalListings)}
           icon={Building2}
+          href="/listings?tab=available"
         />
         <StatCard
           label={t.sharesThisMonth}
@@ -112,17 +174,20 @@ export default async function DashboardPage() {
           label={t.leadsThisMonth}
           value={stats.leadsThisMonth}
           icon={Users}
+          href="/leads"
         />
         <StatCard
           label={t.bookingsThisMonth}
           value={stats.bookingsThisMonth}
           icon={CalendarCheck}
+          href="/deals?status=booked"
         />
         <StatCard
           label={t.closedThisMonth}
           value={stats.closedThisMonth}
           icon={CheckCircle2}
           tone="success"
+          href="/deals?status=closed"
         />
         <StatCard
           label={t.salesThisMonth}
@@ -130,6 +195,7 @@ export default async function DashboardPage() {
           hint={t.vsLastMonth(salesMoM >= 0 ? "▲" : "▼", Math.abs(salesMoM))}
           icon={CheckCircle2}
           tone="gold"
+          href="/deals?status=closed"
         />
         <StatCard
           label={t.conversionRate}

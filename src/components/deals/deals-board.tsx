@@ -37,12 +37,19 @@ export function DealsBoard({
   deals,
   titles,
   agent,
+  initialStatus,
 }: {
   deals: DealRow[];
   titles: Record<string, string>;
   agent?: AgentStamp;
+  initialStatus?: string;
 }) {
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const validInitial = (DEAL_STATUSES as readonly string[]).includes(
+    initialStatus ?? "",
+  )
+    ? (initialStatus as DealStatus)
+    : "all";
+  const [status, setStatus] = useState<StatusFilter>(validInitial);
   const [type, setType] = useState<TypeFilter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
   const [q, setQ] = useState("");

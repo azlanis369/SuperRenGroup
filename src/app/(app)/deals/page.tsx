@@ -11,7 +11,12 @@ import { DemoBadge } from "@/components/demo-badge";
 
 export const metadata: Metadata = { title: "Tawaran" };
 
-export default async function DealsPage() {
+export default async function DealsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status: statusParam } = await searchParams;
   const user = await requireOnboardedUser();
   const admin = isAdmin(user.role);
   const { deals, listingTitles } = await getDeals(
@@ -99,6 +104,7 @@ export default async function DealsPage() {
           deals={deals}
           titles={Object.fromEntries(listingTitles)}
           agent={stamp}
+          initialStatus={statusParam}
         />
       )}
     </div>
