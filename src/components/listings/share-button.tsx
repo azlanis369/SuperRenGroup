@@ -9,6 +9,7 @@ import {
 } from "@/lib/share";
 import { absoluteUrl } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { track } from "@/lib/analytics";
 import { useWhatsApp } from "@/components/whatsapp/whatsapp-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,8 +81,13 @@ export function ShareButton({
     setTimeout(() => setCopied(false), 1800);
   }
 
+  function onOpenChange(o: boolean) {
+    if (o) track("click_share_listing", { listingId: listing.id });
+    setOpen(o);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant={variant} size={size}>
           <Share2 className="h-4 w-4" />

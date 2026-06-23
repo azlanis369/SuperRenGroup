@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { listingSchema, type ListingFormValues } from "@/lib/validations/listing";
 import { createListing, updateListing } from "@/lib/actions/listing";
+import { track } from "@/lib/analytics";
 import {
   LISTING_CATEGORIES,
   CATEGORY_LABELS,
@@ -85,6 +86,10 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
 
   const category = form.watch("category");
 
+  useEffect(() => {
+    if (mode === "create") track("add_property_started");
+  }, [mode]);
+
   async function next() {
     // Validate only step-1 critical fields before advancing.
     if (step === 0) {
@@ -125,6 +130,9 @@ export function ListingForm({ mode, listingId, defaults, initialMedia = [] }: Pr
         setError(res.error);
         return;
       }
+      track(mode === "create" ? "add_property_completed" : "edit_listing", {
+        listingId: res.id,
+      });
       router.push(`/listings/${res.id}`);
       router.refresh();
     });
