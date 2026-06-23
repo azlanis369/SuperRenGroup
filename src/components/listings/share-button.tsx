@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Share2, Copy, Send, Check, MessageCircle } from "lucide-react";
 import {
-  buildWhatsAppShareUrl,
   buildTelegramShareUrl,
   buildShareMessage,
   type AgentStamp,
 } from "@/lib/share";
 import { absoluteUrl } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useWhatsApp } from "@/components/whatsapp/whatsapp-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,9 +57,15 @@ export function ShareButton({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { lang, t } = useLanguage();
+  const { open: openWhatsApp } = useWhatsApp();
   const ts = t.share;
 
   const publicUrl = absoluteUrl(`/listing/${listing.slug}`);
+
+  function shareWhatsApp() {
+    trackShare(listing.id, "whatsapp");
+    openWhatsApp({ text: buildShareMessage(listing, agent, lang) });
+  }
 
   async function copyLink() {
     await navigator.clipboard.writeText(publicUrl);
@@ -88,18 +94,11 @@ export function ShareButton({
         </DialogHeader>
         <div className="space-y-2">
           <Button
-            asChild
             variant="success"
             className="w-full justify-start"
-            onClick={() => trackShare(listing.id, "whatsapp")}
+            onClick={shareWhatsApp}
           >
-            <a
-              href={buildWhatsAppShareUrl(listing, agent, lang)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-4 w-4" /> {ts.whatsapp}
-            </a>
+            <MessageCircle className="h-4 w-4" /> {ts.whatsapp}
           </Button>
           <Button
             asChild

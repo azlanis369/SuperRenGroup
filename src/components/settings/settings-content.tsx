@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DemoBadge } from "@/components/demo-badge";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import { LanguageCard } from "@/components/settings/language-selector";
+import { WhatsAppAppCard } from "@/components/settings/whatsapp-app-selector";
 import { useLanguage } from "@/contexts/language-context";
 
 type Props = {
@@ -79,6 +80,9 @@ export function SettingsContent({
 
       {/* Language */}
       <LanguageCard />
+
+      {/* WhatsApp app preference */}
+      <WhatsAppAppCard />
 
       {/* Demo mode */}
       <Card>

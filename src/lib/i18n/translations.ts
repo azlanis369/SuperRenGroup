@@ -241,6 +241,18 @@ const ms = {
     copyMessage: "Salin mesej penuh",
     button: "Kongsi",
   },
+  whatsappApp: {
+    chooseTitle: "Buka dengan aplikasi mana?",
+    chooseDesc: "Pilih aplikasi WhatsApp untuk hantar mesej ini.",
+    regular: "WhatsApp",
+    business: "WhatsApp Business",
+    remember: "Ingat pilihan saya",
+    iosNote: "Pada iPhone, sistem mungkin minta anda pilih aplikasi.",
+    settingsTitle: "Aplikasi WhatsApp",
+    settingsDesc:
+      "Pilih aplikasi WhatsApp yang dibuka apabila anda follow up atau kongsi listing.",
+    ask: "Tanya setiap kali",
+  },
   settings: {
     title: "Tetapan",
     subtitle: "Tetapan akaun anda.",
@@ -499,6 +511,18 @@ const en: typeof ms = {
     copyLink: "Copy public link",
     copyMessage: "Copy full message",
     button: "Share",
+  },
+  whatsappApp: {
+    chooseTitle: "Open with which app?",
+    chooseDesc: "Choose the WhatsApp app to send this message.",
+    regular: "WhatsApp",
+    business: "WhatsApp Business",
+    remember: "Remember my choice",
+    iosNote: "On iPhone, the system may ask you to pick an app.",
+    settingsTitle: "WhatsApp app",
+    settingsDesc:
+      "Choose which WhatsApp app opens when you follow up or share a listing.",
+    ask: "Ask every time",
   },
   settings: {
     title: "Settings",
