@@ -630,7 +630,7 @@ function StepPublish({ form }: { form: FormType }) {
             )}
           />
         </Field>
-        <Field label="Keterlihatan (visibility)" full>
+        <Field label="Paparan" full>
           <Controller
             control={control}
             name="visibility"
