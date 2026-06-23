@@ -27,7 +27,10 @@ export function DemoBadge({
   );
 }
 
-/** Inline pill used on demo cards e.g. "DEMO LISTING". */
+/**
+ * Inline pill used on demo cards e.g. "DEMO LISTING". Renders nothing when Demo
+ * Mode is off, so demo labels never leak into a production-facing UI.
+ */
 export function DemoTag({
   className,
   children = "DEMO",
@@ -35,6 +38,7 @@ export function DemoTag({
   className?: string;
   children?: React.ReactNode;
 }) {
+  if (!DEMO_MODE) return null;
   return (
     <span
       className={cn(
