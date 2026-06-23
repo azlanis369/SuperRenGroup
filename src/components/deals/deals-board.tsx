@@ -37,12 +37,19 @@ export function DealsBoard({
   deals,
   titles,
   agent,
+  initialStatus,
 }: {
   deals: DealRow[];
   titles: Record<string, string>;
   agent?: AgentStamp;
+  initialStatus?: string;
 }) {
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const validInitial = (DEAL_STATUSES as readonly string[]).includes(
+    initialStatus ?? "",
+  )
+    ? (initialStatus as DealStatus)
+    : "all";
+  const [status, setStatus] = useState<StatusFilter>(validInitial);
   const [type, setType] = useState<TypeFilter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
   const [q, setQ] = useState("");
@@ -177,12 +184,17 @@ export function DealsBoard({
                   </p>
                 )}
 
-                <p className="mt-2 text-lg font-bold">{formatPrice(price)}</p>
+                <p className="mt-2 whitespace-nowrap text-lg font-bold tabular-nums">
+                  {formatPrice(price)}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {td.commissionLabel}: {formatPrice(deal.commission_amount)}
-                  {deal.commission_percentage
-                    ? ` (${deal.commission_percentage}%)`
-                    : ""}
+                  {td.commissionLabel}:{" "}
+                  <span className="whitespace-nowrap tabular-nums">
+                    {formatPrice(deal.commission_amount)}
+                    {deal.commission_percentage
+                      ? ` (${deal.commission_percentage}%)`
+                      : ""}
+                  </span>
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">

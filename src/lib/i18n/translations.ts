@@ -60,6 +60,12 @@ const ms = {
     totalViews: "Jumlah Tontonan",
     noArea: "Tiada data kawasan lagi.",
     noListing: "Tiada listing lagi.",
+    dailyTitle: "Apa perlu dibuat hari ini?",
+    dailyEmpty: "Semua tugasan terkini selesai. Syabas!",
+    dailyLeads: (n: number) => `${n} prospek perlu follow-up`,
+    dailyDeals: (n: number) => `${n} tawaran perlu tindakan`,
+    dailyListings: (n: number) => `${n} listing perlu dikemaskini`,
+    dailyViewings: (n: number) => `${n} viewing menunggu/akan datang`,
   },
   standing: {
     rankThisMonth: "Kedudukan bulan ini",
@@ -331,6 +337,14 @@ const en: typeof ms = {
     totalViews: "Total Views",
     noArea: "No area data yet.",
     noListing: "No listings yet.",
+    dailyTitle: "What to do today?",
+    dailyEmpty: "You're all caught up. Nice work!",
+    dailyLeads: (n: number) => `${n} lead${n === 1 ? "" : "s"} to follow up`,
+    dailyDeals: (n: number) => `${n} deal${n === 1 ? "" : "s"} need action`,
+    dailyListings: (n: number) =>
+      `${n} listing${n === 1 ? "" : "s"} to update`,
+    dailyViewings: (n: number) =>
+      `${n} viewing${n === 1 ? "" : "s"} pending/upcoming`,
   },
   standing: {
     rankThisMonth: "Rank this month",
