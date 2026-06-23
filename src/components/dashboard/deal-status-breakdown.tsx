@@ -66,7 +66,7 @@ export function DealStatusBreakdown({
                 </span>
               </p>
               {d.value > 0 ? (
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 whitespace-nowrap text-[11px] tabular-nums text-muted-foreground">
                   {formatPrice(d.value)}
                 </p>
               ) : null}

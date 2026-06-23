@@ -34,6 +34,7 @@ import { DemoTag } from "@/components/demo-badge";
 import { ListingGallery } from "@/components/public/listing-gallery";
 import { AgentContactCard } from "@/components/public/agent-contact-card";
 import { ShareButton } from "@/components/listings/share-button";
+import { ListingStickyCta } from "@/components/public/listing-sticky-cta";
 import { ViewTracker } from "@/components/public/view-tracker";
 import { PublicListingCard } from "@/components/public/public-listing-card";
 import type { ListingRow } from "@/lib/database.types";
@@ -146,7 +147,7 @@ export default async function PublicListingPage({
       <ViewTracker listingId={listing.id} />
       <PublicHeader />
 
-      <main className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6 lg:pb-5">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <ListingGallery media={gallery} title={listing.title} />
@@ -166,7 +167,7 @@ export default async function PublicListingPage({
                   ? listing.address_public
                   : listing.area}
               </p>
-              <p className="mt-3 text-3xl font-bold text-primary">
+              <p className="mt-3 whitespace-nowrap text-3xl font-bold tabular-nums text-primary">
                 {listing.price_display || formatPrice(listing.price)}
               </p>
             </div>
@@ -293,6 +294,22 @@ export default async function PublicListingPage({
 
         <Disclaimer />
       </main>
+
+      {agent ? (
+        <ListingStickyCta
+          listing={listing}
+          agent={{
+            name: agent.display_name || agent.full_name,
+            phone: agent.whatsapp || agent.phone,
+            ren: agent.ren_number,
+            agency: agent.agency_name,
+          }}
+          whatsappUrl={whatsappUrl}
+          phone={agent.phone || agent.whatsapp}
+          showPhone={listing.show_agent_phone}
+          enableWhatsApp={listing.enable_whatsapp_cta}
+        />
+      ) : null}
     </div>
   );
 }

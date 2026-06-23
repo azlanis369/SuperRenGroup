@@ -157,7 +157,7 @@ export default async function ListingDetailPage({
           <Card>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Harga</p>
-              <p className="text-2xl font-bold">
+              <p className="whitespace-nowrap text-2xl font-bold tabular-nums">
                 {listing.price_display || formatPrice(listing.price)}
               </p>
               <dl className="mt-4 space-y-2 text-sm">
