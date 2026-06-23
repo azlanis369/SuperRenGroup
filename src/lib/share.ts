@@ -1,4 +1,5 @@
 import { absoluteUrl, formatPrice, toWaNumber } from "@/lib/utils";
+import type { Lang } from "@/lib/i18n/translations";
 
 type ShareListing = {
   title: string;
@@ -17,11 +18,26 @@ export type AgentStamp = {
   agency?: string | null;
 };
 
-function priceText(l: ShareListing): string {
+function priceText(l: ShareListing, lang: Lang = "ms"): string {
   if (l.price_display) return l.price_display;
   if (l.price) return formatPrice(l.price);
-  return "Harga atas permintaan";
+  return lang === "en" ? "Price on request" : "Harga atas permintaan";
 }
+
+const SHARE_T = {
+  ms: {
+    intro: "Hi, saya ingin kongsikan listing ini:",
+    highlight: "Highlight:",
+    view: "Lihat gambar & details:",
+    contact: "Hubungi saya jika berminat.",
+  },
+  en: {
+    intro: "Hi, I'd like to share this listing:",
+    highlight: "Highlights:",
+    view: "View photos & details:",
+    contact: "Contact me if interested.",
+  },
+} as const;
 
 /** Malaysian local phone format, e.g. "+60 17-690 0696" -> "0176900696". */
 function phoneLocal(phone?: string | null): string {
@@ -39,21 +55,26 @@ export function buildAgentStamp(a?: AgentStamp | null): string {
   return `\n\n${line1}` + (line2 ? `\n${line2}` : "");
 }
 
-/** Build the standard WhatsApp share message (Malay template) with agent stamp. */
-export function buildShareMessage(l: ShareListing, agent?: AgentStamp): string {
+/** Build the standard WhatsApp share message (UI language) with agent stamp. */
+export function buildShareMessage(
+  l: ShareListing,
+  agent?: AgentStamp,
+  lang: Lang = "ms",
+): string {
   const url = absoluteUrl(`/listing/${l.slug}`);
+  const tt = SHARE_T[lang];
   const points = (l.top_selling_points ?? []).slice(0, 3);
   const highlights =
     points.length > 0
-      ? `\n\nHighlight:\n${points.map((p, i) => `${i + 1}. ${p}`).join("\n")}`
+      ? `\n\n${tt.highlight}\n${points.map((p, i) => `${i + 1}. ${p}`).join("\n")}`
       : "";
 
   return (
-    `Hi, saya ingin kongsikan listing ini:\n\n` +
-    `${l.title}\n${priceText(l)}\n${l.area}` +
+    `${tt.intro}\n\n` +
+    `${l.title}\n${priceText(l, lang)}\n${l.area}` +
     highlights +
-    `\n\nLihat gambar & details:\n${url}\n\n` +
-    `Hubungi saya jika berminat.` +
+    `\n\n${tt.view}\n${url}\n\n` +
+    `${tt.contact}` +
     buildAgentStamp(agent)
   );
 }
@@ -62,8 +83,9 @@ export function buildShareMessage(l: ShareListing, agent?: AgentStamp): string {
 export function buildWhatsAppShareUrl(
   l: ShareListing,
   agent?: AgentStamp,
+  lang: Lang = "ms",
 ): string {
-  const text = encodeURIComponent(buildShareMessage(l, agent));
+  const text = encodeURIComponent(buildShareMessage(l, agent, lang));
   return `https://wa.me/?text=${text}`;
 }
 
@@ -82,9 +104,13 @@ export function buildInquiryWhatsAppUrl(
 }
 
 /** Telegram share — copy/share text (incl. stamp) + share intent URL. */
-export function buildTelegramShareUrl(l: ShareListing, agent?: AgentStamp): string {
+export function buildTelegramShareUrl(
+  l: ShareListing,
+  agent?: AgentStamp,
+  lang: Lang = "ms",
+): string {
   const url = absoluteUrl(`/listing/${l.slug}`);
-  const text = encodeURIComponent(buildShareMessage(l, agent));
+  const text = encodeURIComponent(buildShareMessage(l, agent, lang));
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`;
 }
 
@@ -98,8 +124,16 @@ export function buildFollowUpMessage(
   customerName?: string | null,
   listingTitle?: string | null,
   agent?: AgentStamp,
+  lang: Lang = "ms",
 ): string {
   const hi = customerName ? `Hi ${customerName},` : "Hi,";
+  if (lang === "en") {
+    const who = agent?.name
+      ? ` I'm ${agent.name}${agent.agency ? ` from ${agent.agency}` : ""}.`
+      : "";
+    const re = listingTitle ? ` regarding "${listingTitle}"` : "";
+    return `${hi}${who} I'd like to follow up${re}. Still interested? Happy to help with the next steps. 😊`;
+  }
   const who = agent?.name
     ? ` Saya ${agent.name}${agent.agency ? ` dari ${agent.agency}` : ""}.`
     : "";

@@ -1,6 +1,7 @@
 "use client";
 
 import { Globe } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,14 @@ const LANGS: { value: Lang; flag: string }[] = [
 
 export function LanguageCard() {
   const { lang, setLang, t } = useLanguage();
+  const router = useRouter();
   const s = t.settings;
+
+  function choose(value: Lang) {
+    setLang(value);
+    // Re-render server components in the new language.
+    router.refresh();
+  }
 
   return (
     <Card>
@@ -31,7 +39,7 @@ export function LanguageCard() {
               key={value}
               variant={lang === value ? "default" : "outline"}
               size="sm"
-              onClick={() => setLang(value)}
+              onClick={() => choose(value)}
               className="gap-2"
             >
               <span>{flag}</span>

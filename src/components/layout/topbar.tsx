@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { Logo } from "@/components/brand";
 import { DemoBadge } from "@/components/demo-badge";
+import { LangToggle } from "@/components/layout/lang-toggle";
 import {
   Avatar,
   AvatarFallback,
@@ -48,6 +49,7 @@ export function Topbar({
       </div>
       <div className="flex items-center gap-2">
         <DemoBadge className="lg:hidden" label="Demo" />
+        <LangToggle />
         <Link href="/profile">
           <Avatar className="h-9 w-9 border border-border">
             {photoUrl ? <AvatarImage src={photoUrl} alt={name} /> : null}

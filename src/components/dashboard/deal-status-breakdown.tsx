@@ -1,7 +1,7 @@
-import {
-  DEAL_STATUS_LABELS,
-  type DealStatus,
-} from "@/lib/constants";
+"use client";
+
+import { type DealStatus } from "@/lib/constants";
+import { useLanguage } from "@/contexts/language-context";
 import { formatPrice } from "@/lib/utils";
 
 const COLORS: Record<DealStatus, string> = {
@@ -31,6 +31,8 @@ export function DealStatusBreakdown({
 }: {
   data: { status: DealStatus; count: number; value: number }[];
 }) {
+  const { t } = useLanguage();
+  const label = t.dealStatusLabel;
   const total = data.reduce((s, d) => s + d.count, 0);
   const closedValue =
     data.find((d) => d.status === "closed")?.value ?? 0;
@@ -45,7 +47,7 @@ export function DealStatusBreakdown({
               key={d.status}
               className={COLORS[d.status]}
               style={{ width: `${(d.count / Math.max(total, 1)) * 100}%` }}
-              title={`${DEAL_STATUS_LABELS[d.status]}: ${d.count}`}
+              title={`${label[d.status]}: ${d.count}`}
             />
           ) : null,
         )}
@@ -60,7 +62,7 @@ export function DealStatusBreakdown({
               <p className="text-sm font-semibold leading-none text-foreground">
                 {d.count}
                 <span className="ml-1 text-xs font-normal text-muted-foreground">
-                  {DEAL_STATUS_LABELS[d.status]}
+                  {label[d.status]}
                 </span>
               </p>
               {d.value > 0 ? (
@@ -74,11 +76,7 @@ export function DealStatusBreakdown({
       </ul>
 
       <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-        Nilai jualan closed:{" "}
-        <span className="font-semibold text-foreground">
-          {formatPrice(closedValue)}
-        </span>{" "}
-        · {total} deal keseluruhan
+        {t.deals.breakdownFoot(formatPrice(closedValue), total)}
       </p>
     </div>
   );

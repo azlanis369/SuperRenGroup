@@ -3,6 +3,7 @@ import { Percent, Clock, Wallet, AlertTriangle } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getDashboardStats, getSwot } from "@/lib/data/stats";
 import { LISTING_STATUS_LABELS, SECTOR_LABELS } from "@/lib/constants";
+import { getDict } from "@/lib/i18n/server";
 import { formatPrice, formatCompact } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
@@ -23,10 +24,13 @@ export default async function AnalyticsPage() {
   const admin = isAdmin(user.role);
   const scope = admin ? {} : { ownerId: user.id };
 
-  const [stats, swot] = await Promise.all([
+  const [stats, swot, dict] = await Promise.all([
     getDashboardStats(scope),
     getSwot(scope),
+    getDict(),
   ]);
+  const t = dict.analytics;
+  const td = dict.dashboard;
 
   const statusData = stats.byStatus
     .map((s) => ({ label: LISTING_STATUS_LABELS[s.status], count: s.count }))
@@ -40,39 +44,37 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
         <p className="text-muted-foreground">
-          {admin
-            ? "Pandangan mendalam prestasi seluruh kumpulan."
-            : "Pandangan mendalam prestasi jualan anda."}
+          {admin ? t.subtitleAdmin : t.subtitleAgent}
         </p>
         <DemoBadge className="mt-2" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="Conversion Rate"
+          label={t.conversionRate}
           value={`${stats.conversionRate}%`}
-          hint="lead → closed"
+          hint={td.leadToClosed}
           icon={Percent}
         />
         <StatCard
-          label="Avg Days to Close"
+          label={t.avgDaysToClose}
           value={stats.avgDaysToClose}
-          hint="hari"
+          hint={dict.common.days}
           icon={Clock}
         />
         <StatCard
-          label="Total Commission"
+          label={t.totalCommission}
           value={formatPrice(stats.totalCommission)}
-          hint="deal closed"
+          hint={t.closedHint}
           icon={Wallet}
           tone="gold"
         />
         <StatCard
-          label="Stale Listings"
+          label={t.staleListings}
           value={stats.staleListings}
-          hint="> 45 hari"
+          hint={t.staleHint}
           icon={AlertTriangle}
         />
       </div>
@@ -80,7 +82,7 @@ export default async function AnalyticsPage() {
       {/* Sector performance */}
       <Card>
         <CardHeader>
-          <CardTitle>Prestasi Mengikut Sektor (closed)</CardTitle>
+          <CardTitle>{t.sectorPerf}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
@@ -105,7 +107,7 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Status Deal</CardTitle>
+            <CardTitle>{t.dealStatus}</CardTitle>
           </CardHeader>
           <CardContent>
             <DealStatusBreakdown data={stats.dealStatusBreakdown} />
@@ -113,7 +115,7 @@ export default async function AnalyticsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Nilai Jualan (6 Bulan)</CardTitle>
+            <CardTitle>{t.salesValue6m}</CardTitle>
           </CardHeader>
           <CardContent>
             <MoneyBarChart data={stats.monthlySales} />
@@ -126,7 +128,7 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Leads</CardTitle>
+            <CardTitle>{td.monthlyLeads}</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyLineChart data={stats.monthlyLeads} />
@@ -134,7 +136,7 @@ export default async function AnalyticsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Closed Deals</CardTitle>
+            <CardTitle>{td.monthlyClosed}</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyLineChart data={stats.monthlyClosed} color="hsl(41 52% 54%)" />
@@ -142,7 +144,7 @@ export default async function AnalyticsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Conversion Funnel</CardTitle>
+            <CardTitle>{td.conversionFunnel}</CardTitle>
           </CardHeader>
           <CardContent>
             <Funnel data={stats.funnel} />
@@ -150,28 +152,28 @@ export default async function AnalyticsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Area Performance</CardTitle>
+            <CardTitle>{td.areaPerformance}</CardTitle>
           </CardHeader>
           <CardContent>
             {areaData.length ? (
               <SimpleBarChart data={areaData} />
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Tiada data kawasan lagi.
+                {td.noArea}
               </p>
             )}
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Listing Status Distribution</CardTitle>
+            <CardTitle>{td.statusDistribution}</CardTitle>
           </CardHeader>
           <CardContent>
             {statusData.length ? (
               <SimpleBarChart data={statusData} color="hsl(211 63% 16%)" />
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Tiada listing lagi.
+                {td.noListing}
               </p>
             )}
           </CardContent>

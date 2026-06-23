@@ -9,6 +9,7 @@ import {
   type AgentStamp,
 } from "@/lib/share";
 import { absoluteUrl } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,6 +56,8 @@ export function ShareButton({
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { lang, t } = useLanguage();
+  const ts = t.share;
 
   const publicUrl = absoluteUrl(`/listing/${listing.slug}`);
 
@@ -66,7 +69,7 @@ export function ShareButton({
   }
 
   async function copyMessage() {
-    await navigator.clipboard.writeText(buildShareMessage(listing, agent));
+    await navigator.clipboard.writeText(buildShareMessage(listing, agent, lang));
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
@@ -76,12 +79,12 @@ export function ShareButton({
       <DialogTrigger asChild>
         <Button variant={variant} size={size}>
           <Share2 className="h-4 w-4" />
-          {label ?? (size !== "icon-sm" ? "Share" : "")}
+          {label ?? (size !== "icon-sm" ? ts.button : "")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Kongsi listing</DialogTitle>
+          <DialogTitle>{ts.title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <Button
@@ -91,11 +94,11 @@ export function ShareButton({
             onClick={() => trackShare(listing.id, "whatsapp")}
           >
             <a
-              href={buildWhatsAppShareUrl(listing, agent)}
+              href={buildWhatsAppShareUrl(listing, agent, lang)}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <MessageCircle className="h-4 w-4" /> Kongsi ke WhatsApp
+              <MessageCircle className="h-4 w-4" /> {ts.whatsapp}
             </a>
           </Button>
           <Button
@@ -105,11 +108,11 @@ export function ShareButton({
             onClick={() => trackShare(listing.id, "telegram")}
           >
             <a
-              href={buildTelegramShareUrl(listing, agent)}
+              href={buildTelegramShareUrl(listing, agent, lang)}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Send className="h-4 w-4" /> Kongsi ke Telegram
+              <Send className="h-4 w-4" /> {ts.telegram}
             </a>
           </Button>
           <Button
@@ -118,14 +121,14 @@ export function ShareButton({
             onClick={copyLink}
           >
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            Salin pautan awam
+            {ts.copyLink}
           </Button>
           <Button
             variant="ghost"
             className="w-full justify-start"
             onClick={copyMessage}
           >
-            <Copy className="h-4 w-4" /> Salin mesej penuh
+            <Copy className="h-4 w-4" /> {ts.copyMessage}
           </Button>
         </div>
         <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">

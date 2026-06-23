@@ -24,20 +24,26 @@ const LanguageContext = createContext<LanguageContextValue>({
   t: translations[DEFAULT_LANG],
 });
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
+export function LanguageProvider({
+  children,
+  initialLang = DEFAULT_LANG,
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
+  const [lang, setLangState] = useState<Lang>(initialLang);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (stored === "en" || stored === "ms") {
-      setLangState(stored);
-      document.documentElement.lang = stored;
-    }
-  }, []);
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   function setLang(newLang: Lang) {
     setLangState(newLang);
-    localStorage.setItem(STORAGE_KEY, newLang);
+    try {
+      localStorage.setItem(STORAGE_KEY, newLang);
+    } catch {}
+    // Cookie so server components render in the chosen language too.
+    document.cookie = `${STORAGE_KEY}=${newLang}; path=/; max-age=31536000; samesite=lax`;
     document.documentElement.lang = newLang;
   }
 

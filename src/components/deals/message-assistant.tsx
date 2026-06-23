@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Bot, MessageCircle, Copy, Check } from "lucide-react";
 import { toWaNumber } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 import { messagePack, type MsgCtx } from "@/lib/message-templates";
 import type { AgentStamp } from "@/lib/share";
 import {
@@ -36,10 +37,12 @@ export function MessageAssistant({
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
+  const { lang, t } = useLanguage();
+  const ta = t.autobot;
 
   const wa = toWaNumber(phone);
   const ctx: MsgCtx = { customerName, listingTitle, priceText, agent };
-  const pack = messagePack(kind, status, ctx);
+  const pack = messagePack(kind, status, ctx, lang);
 
   async function copy(i: number, text: string) {
     await navigator.clipboard.writeText(text);
@@ -57,13 +60,13 @@ export function MessageAssistant({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-emerald-500" /> Pembantu Mesej (Autobot)
+            <Bot className="h-5 w-5 text-emerald-500" /> {ta.title}
           </DialogTitle>
         </DialogHeader>
 
         {/* Guidance for this stage */}
         <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
-          <span className="font-semibold">💡 Panduan: </span>
+          <span className="font-semibold">💡 {ta.guide} </span>
           {pack.tip}
         </div>
 
@@ -84,7 +87,7 @@ export function MessageAssistant({
                   rel="noopener noreferrer"
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
                 >
-                  <MessageCircle className="h-4 w-4" /> Hantar WhatsApp
+                  <MessageCircle className="h-4 w-4" /> {ta.send}
                 </a>
                 <button
                   onClick={() => copy(i, it.text)}
@@ -95,17 +98,14 @@ export function MessageAssistant({
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
-                  Salin
+                  {ta.copy}
                 </button>
               </div>
             </div>
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Setiap mesej ditandatangani dengan stamp anda secara automatik. Anda
-          boleh edit selepas ia dibuka di WhatsApp.
-        </p>
+        <p className="text-xs text-muted-foreground">{ta.foot}</p>
       </DialogContent>
     </Dialog>
   );

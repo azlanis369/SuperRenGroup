@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Search, Handshake, X } from "lucide-react";
 import {
   DEAL_STATUSES,
-  DEAL_STATUS_LABELS,
   DEAL_STATUS_TONE,
   type DealStatus,
 } from "@/lib/constants";
 import { cn, formatDate, formatPrice } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 import type { DealRow } from "@/lib/database.types";
 import type { AgentStamp } from "@/lib/share";
 import { Card } from "@/components/ui/card";
@@ -46,6 +46,9 @@ export function DealsBoard({
   const [type, setType] = useState<TypeFilter>("all");
   const [sort, setSort] = useState<SortKey>("recent");
   const [q, setQ] = useState("");
+  const { t } = useLanguage();
+  const td = t.deals;
+  const statusLabel = t.dealStatusLabel;
 
   // counts per status (respecting type + search, but not the status filter itself)
   const base = useMemo(() => {
@@ -85,13 +88,13 @@ export function DealsBoard({
       {/* Pipeline status filter */}
       <div className="flex flex-wrap gap-2">
         <Chip active={status === "all"} onClick={() => setStatus("all")}>
-          Semua{" "}
+          {t.common.all}{" "}
           <span className="ml-1 opacity-70">{counts.get("all") ?? 0}</span>
         </Chip>
         {DEAL_STATUSES.map((s) => (
           <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
             <span className={cn("h-2 w-2 rounded-full", DOT[s])} />
-            {DEAL_STATUS_LABELS[s]}
+            {statusLabel[s]}
             <span className="ml-0.5 opacity-70">{counts.get(s) ?? 0}</span>
           </Chip>
         ))}
@@ -104,7 +107,7 @@ export function DealsBoard({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Cari listing atau nama pelanggan…"
+            placeholder={td.searchPlaceholder}
             className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-9 text-sm outline-none focus:border-primary"
           />
           {q ? (
@@ -119,31 +122,31 @@ export function DealsBoard({
         </div>
         <div className="flex gap-1.5">
           <Seg active={type === "all"} onClick={() => setType("all")}>
-            Semua
+            {t.common.all}
           </Seg>
           <Seg active={type === "sale"} onClick={() => setType("sale")}>
-            Jualan
+            {td.sale}
           </Seg>
           <Seg active={type === "rental"} onClick={() => setType("rental")}>
-            Sewaan
+            {td.rental}
           </Seg>
           <Seg
             active={sort === "value"}
             onClick={() => setSort(sort === "value" ? "recent" : "value")}
           >
-            {sort === "value" ? "↓ Nilai" : "↕ Sort"}
+            {sort === "value" ? td.sortValue : `↕ ${td.sort}`}
           </Seg>
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Menunjukkan <strong>{rows.length}</strong> daripada {deals.length} tawaran
+        {td.showing(rows.length, deals.length)}
       </p>
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           <Handshake className="mx-auto mb-2 h-6 w-6 opacity-50" />
-          Tiada tawaran sepadan dengan tapisan.
+          {td.noMatch}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -154,10 +157,10 @@ export function DealsBoard({
               <Card key={deal.id} className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <Badge tone={deal.deal_type === "rental" ? "info" : "primary"}>
-                    {deal.deal_type === "rental" ? "Sewaan" : "Jualan"}
+                    {deal.deal_type === "rental" ? td.rental : td.sale}
                   </Badge>
                   <Badge tone={DEAL_STATUS_TONE[deal.deal_status]}>
-                    {DEAL_STATUS_LABELS[deal.deal_status]}
+                    {statusLabel[deal.deal_status]}
                   </Badge>
                 </div>
 
@@ -176,7 +179,7 @@ export function DealsBoard({
 
                 <p className="mt-2 text-lg font-bold">{formatPrice(price)}</p>
                 <p className="text-sm text-muted-foreground">
-                  Komisen: {formatPrice(deal.commission_amount)}
+                  {td.commissionLabel}: {formatPrice(deal.commission_amount)}
                   {deal.commission_percentage
                     ? ` (${deal.commission_percentage}%)`
                     : ""}
@@ -184,10 +187,10 @@ export function DealsBoard({
 
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
                   {deal.booking_date ? (
-                    <span>Booking: {formatDate(deal.booking_date)}</span>
+                    <span>{td.booking}: {formatDate(deal.booking_date)}</span>
                   ) : null}
                   {deal.closed_date ? (
-                    <span>Closed: {formatDate(deal.closed_date)}</span>
+                    <span>{td.closedOn}: {formatDate(deal.closed_date)}</span>
                   ) : null}
                 </div>
 

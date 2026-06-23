@@ -1,6 +1,7 @@
 import { requireOnboardedUser } from "@/lib/auth";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { isTeamLeader } from "@/lib/demo-data/dataset";
+import { getLang } from "@/lib/i18n/server";
 import { LanguageProvider } from "@/contexts/language-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
@@ -14,9 +15,10 @@ export default async function AppLayout({
   const user = await requireOnboardedUser();
   const name = user.profile?.display_name || user.profile?.full_name || "Agent";
   const teamLeader = LOCAL_DEMO && isTeamLeader(user.id);
+  const lang = await getLang();
 
   return (
-    <LanguageProvider>
+    <LanguageProvider initialLang={lang}>
       <div className="min-h-screen bg-background">
         <Sidebar role={user.role} isTeamLeader={teamLeader} />
         <div className="lg:pl-64">

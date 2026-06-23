@@ -4,12 +4,15 @@ import { useState } from "react";
 import Image from "next/image";
 import { ArrowUp, ArrowDown, Minus, Crown, AlertCircle } from "lucide-react";
 import { cn, formatCompact } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 import type { TeamMemberRow } from "@/lib/data/stats";
 
 type SortKey = "month" | "year";
 
 export function TeamBoard({ members }: { members: TeamMemberRow[] }) {
   const [sort, setSort] = useState<SortKey>("month");
+  const { t } = useLanguage();
+  const tt = t.team;
 
   const rows = [...members].sort((a, b) =>
     sort === "month" ? b.thisMonth - a.thisMonth : b.yearValue - a.yearValue,
@@ -20,14 +23,14 @@ export function TeamBoard({ members }: { members: TeamMemberRow[] }) {
     <div>
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
-          {members.length} ahli pasukan
+          {tt.members(members.length)}
         </p>
         <div className="flex gap-1.5">
           <SortBtn active={sort === "month"} onClick={() => setSort("month")}>
-            Bulan ini
+            {tt.sortMonth}
           </SortBtn>
           <SortBtn active={sort === "year"} onClick={() => setSort("year")}>
-            Tahun ini
+            {tt.sortYear}
           </SortBtn>
         </div>
       </div>
@@ -75,13 +78,13 @@ export function TeamBoard({ members }: { members: TeamMemberRow[] }) {
                     {m.name}
                     {m.isLeader ? (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-bold text-white">
-                        <Crown className="h-2.5 w-2.5" /> Ketua
+                        <Crown className="h-2.5 w-2.5" /> {tt.leader}
                       </span>
                     ) : null}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {m.area ?? "—"} · {m.thisMonthClosed} closed bln ini ·{" "}
-                    {m.yearClosed} setahun
+                    {m.area ?? "—"} · {tt.closedMonth(m.thisMonthClosed)} ·{" "}
+                    {tt.closedYear(m.yearClosed)}
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
@@ -91,7 +94,9 @@ export function TeamBoard({ members }: { members: TeamMemberRow[] }) {
                   {sort === "month" ? (
                     <Delta pct={mom} />
                   ) : (
-                    <p className="text-[11px] text-muted-foreground">setahun</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {tt.sortYear}
+                    </p>
                   )}
                 </div>
               </div>
@@ -107,8 +112,7 @@ export function TeamBoard({ members }: { members: TeamMemberRow[] }) {
 
               {quiet ? (
                 <p className="mt-2 flex items-center gap-1 text-xs font-medium text-red-600">
-                  <AlertCircle className="h-3.5 w-3.5" /> Belum ada closed bulan ini
-                  — perlu perhatian
+                  <AlertCircle className="h-3.5 w-3.5" /> {tt.quiet}
                 </p>
               ) : null}
             </li>

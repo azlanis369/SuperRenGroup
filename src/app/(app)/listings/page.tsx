@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Building2, PlusCircle } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getListings } from "@/lib/data/listings";
+import { getDict } from "@/lib/i18n/server";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingsToolbar } from "@/components/listings/listings-toolbar";
 import { EmptyState } from "@/components/empty-state";
@@ -32,20 +33,21 @@ export default async function ListingsPage({
         agency: user.profile.agency_name,
       }
     : undefined;
+  const dict = await getDict();
+  const t = dict.listings;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Listings</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">
-            {admin ? "Semua listing kumpulan." : "Listing anda."}{" "}
-            {listings.length} buah.
+            {admin ? t.subtitleAdmin : t.subtitleAgent} {t.count(listings.length)}
           </p>
         </div>
         <Button asChild className="hidden sm:flex">
           <Link href="/listings/new">
-            <PlusCircle className="h-4 w-4" /> Add Listing
+            <PlusCircle className="h-4 w-4" /> {dict.common.addListing}
           </Link>
         </Button>
       </div>
@@ -55,12 +57,12 @@ export default async function ListingsPage({
       {listings.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title="Tiada listing dijumpai"
-          description="Cipta listing pertama anda atau laraskan penapis."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
           action={
             <Button asChild>
               <Link href="/listings/new">
-                <PlusCircle className="h-4 w-4" /> Add Listing
+                <PlusCircle className="h-4 w-4" /> {dict.common.addListing}
               </Link>
             </Button>
           }
