@@ -14,7 +14,7 @@ const AGENTS = [
 ];
 
 const PRIMARY = [
-  { id: "user-azlan", name: "Azlan Zakaria", role: "Ejen utama" },
+  { id: "user-azlan", name: "Amirul Nasyriq", role: "Ejen utama" },
   { id: "user-admin", name: "Nasyriq", role: "Group Manager" },
 ];
 
