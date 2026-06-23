@@ -367,6 +367,33 @@ export const demoLeads: LeadRow[] = [];
 export const demoDeals: DealRow[] = [];
 export const demoShares: ShareRow[] = [];
 
+export type ViewingStatus =
+  | "scheduled"
+  | "completed"
+  | "rescheduled"
+  | "cancelled"
+  | "no_show"
+  | "interested"
+  | "not_interested";
+
+export type ViewingRow = {
+  id: string;
+  listing_id: string | null;
+  lead_id: string | null;
+  agent_id: string;
+  prospect_name: string;
+  prospect_phone: string | null;
+  listing_title: string | null;
+  location: string;
+  scheduled_at: string; // ISO datetime
+  status: ViewingStatus;
+  notes: string | null;
+  is_demo: boolean;
+  created_at: string;
+};
+
+export const demoViewings: ViewingRow[] = [];
+
 let lid = 0;
 let did = 0;
 let leadId = 0;
@@ -764,6 +791,150 @@ for (const a of agents.filter((x) => x.status !== "active").slice(0, 8)) {
     facing_direction: "North", title_type: "Strata", viewing_availability: "Dengan temujanji",
     co_broke_allowed: true, private_commission_notes: "Co-broke 50/50. Hubungi Amirul untuk butiran.",
   };
+}
+
+// ---------------------------------------------------------------------------
+// Viewings (derived from leads + listings) — a working Viewing Schedule.
+// ---------------------------------------------------------------------------
+const listingById = new Map(demoListings.map((l) => [l.id, l]));
+let viewId = 0;
+
+/** Build a datetime; dayOffset < 0 = past, > 0 = future. Office hours, on the half-hour. */
+function viewingDateTime(dayOffset: number): string {
+  const d = new Date(
+    NOW.getFullYear(),
+    NOW.getMonth(),
+    NOW.getDate() + dayOffset,
+    between(9, 18),
+    pick([0, 30]),
+    0,
+  );
+  return d.toISOString();
+}
+
+const VIEW_NOTES = [
+  "Prospek minta lihat unit pada hujung minggu.",
+  "Bawa salinan dokumen pinjaman.",
+  "Berminat dengan unit high-floor.",
+  "Akan datang bersama pasangan.",
+  "Tanya tentang co-broke & komisen.",
+  "Perlu confirm parking & maintenance fee.",
+  null,
+  null,
+];
+
+function makeViewing(opts: {
+  lead: LeadRow;
+  listing: ListingRow;
+  dayOffset: number;
+  status: ViewingStatus;
+}): void {
+  viewId += 1;
+  const { lead, listing, dayOffset, status } = opts;
+  demoViewings.push({
+    id: `viewing-${viewId}`,
+    listing_id: listing.id,
+    lead_id: lead.id,
+    agent_id: lead.agent_id,
+    prospect_name: lead.name,
+    prospect_phone: lead.phone,
+    listing_title: listing.title,
+    location: listing.address_public || listing.area,
+    scheduled_at: viewingDateTime(dayOffset),
+    status,
+    notes: pick(VIEW_NOTES),
+    is_demo: true,
+    created_at: daysAgoISO(Math.max(0, -dayOffset) + between(1, 10)),
+  });
+}
+
+for (const lead of demoLeads) {
+  if (!lead.listing_id) continue;
+  const listing = listingById.get(lead.listing_id);
+  if (!listing) continue;
+
+  switch (lead.status) {
+    case "viewing":
+      // Active viewing prospects — mostly upcoming, some just completed.
+      if (chance(0.6)) {
+        makeViewing({ lead, listing, dayOffset: between(0, 9), status: "scheduled" });
+      } else {
+        makeViewing({ lead, listing, dayOffset: -between(1, 6), status: pick(["completed", "interested"]) });
+      }
+      break;
+    case "contacted":
+      if (chance(0.5)) {
+        makeViewing({ lead, listing, dayOffset: between(1, 12), status: "scheduled" });
+      } else if (chance(0.3)) {
+        makeViewing({ lead, listing, dayOffset: -between(2, 20), status: "rescheduled" });
+      }
+      break;
+    case "negotiating":
+      makeViewing({ lead, listing, dayOffset: -between(3, 30), status: "interested" });
+      break;
+    case "booked":
+      makeViewing({ lead, listing, dayOffset: -between(10, 45), status: "interested" });
+      break;
+    case "closed":
+      makeViewing({ lead, listing, dayOffset: -between(20, 90), status: "completed" });
+      break;
+    case "lost":
+      makeViewing({
+        lead,
+        listing,
+        dayOffset: -between(5, 60),
+        status: pick(["not_interested", "no_show", "cancelled"]),
+      });
+      break;
+    case "new":
+      if (chance(0.18)) {
+        makeViewing({ lead, listing, dayOffset: between(2, 14), status: "scheduled" });
+      }
+      break;
+  }
+}
+
+// Ensure the flagship Excella listing has a few upcoming viewings under Amirul.
+{
+  const excella = listingById.get("listing-excella-ampang");
+  if (excella) {
+    const prospects = [
+      { name: "Tan Wei Jie", phone: "+60128841220" },
+      { name: "Hafiz Rahman", phone: "+60173360914" },
+      { name: "Suresh Kumar", phone: "+60192207733" },
+    ];
+    prospects.forEach((p, i) => {
+      leadId += 1;
+      const lead: LeadRow = {
+        id: `lead-${leadId}`,
+        listing_id: excella.id,
+        agent_id: "user-azlan",
+        name: p.name,
+        phone: p.phone,
+        email: null,
+        source: "whatsapp" as LeadSource,
+        budget: "RM 5.0m – 5.2m",
+        preferred_area: "Ampang",
+        notes: "Prospek shoplot Excella Business Park.",
+        status: "viewing" as LeadStatus,
+        is_demo: false,
+        created_at: daysAgoISO(between(2, 14)),
+        updated_at: NOW_ISO,
+      };
+      demoLeads.push(lead);
+      makeViewing({ lead, listing: excella, dayOffset: i + 1, status: "scheduled" });
+    });
+  }
+}
+
+/** Viewings scoped to one agent (ownerId). Omit ownerId for the full group. Sorted by time. */
+export function demoGetViewings(ownerId?: string): ViewingRow[] {
+  const rows = ownerId
+    ? demoViewings.filter((v) => v.agent_id === ownerId)
+    : demoViewings.slice();
+  return rows.sort(
+    (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
+  );
 }
 
 export function agentByUserId(userId: string): AgentProfileRow | undefined {
