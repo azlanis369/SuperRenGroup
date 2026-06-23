@@ -86,12 +86,41 @@ export default async function PublicListingPage({
 }) {
   const { slug } = await params;
   const data = await getPublicListingBySlug(slug);
-  if (!data || data.listing.visibility !== "public" || data.listing.status === "draft") {
+  const HIDDEN_PUBLIC = ["draft", "withdrawn", "expired", "failed"];
+  if (
+    !data ||
+    data.listing.visibility !== "public" ||
+    HIDDEN_PUBLIC.includes(data.listing.status)
+  ) {
     notFound();
   }
   const { listing, media } = data;
   const isDemo = (listing as { is_demo?: boolean }).is_demo;
   const agent = await getListingAgent(listing.agent_id);
+
+  // JSON-LD — RealEstateListing
+  const heroImg = listing.hero_image_url
+    ? listing.hero_image_url.startsWith("http")
+      ? listing.hero_image_url
+      : absoluteUrl(listing.hero_image_url)
+    : absoluteUrl(resolveHero(null, listing.category));
+  const listingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: listing.title,
+    description: sanitizeText(listing.description ?? ""),
+    url: absoluteUrl(`/listing/${listing.slug}`),
+    image: heroImg,
+    datePosted: listing.published_at ?? listing.created_at,
+    ...(listing.price
+      ? { offers: { "@type": "Offer", price: listing.price, priceCurrency: "MYR", availability: "https://schema.org/InStock" } }
+      : {}),
+    ...(listing.built_up_sqft
+      ? { floorSize: { "@type": "QuantitativeValue", value: listing.built_up_sqft, unitText: "SQFT" } }
+      : {}),
+    ...(listing.bedrooms ? { numberOfRooms: listing.bedrooms } : {}),
+    address: { "@type": "PostalAddress", addressLocality: listing.area, addressCountry: "MY" },
+  };
 
   const gallery = media.length
     ? media
@@ -110,6 +139,10 @@ export default async function PublicListingPage({
 
   return (
     <div className="min-h-screen bg-background pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }}
+      />
       <ViewTracker listingId={listing.id} />
       <PublicHeader />
 
