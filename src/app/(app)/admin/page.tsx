@@ -19,6 +19,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { demoUsers, demoAgents } from "@/lib/demo-data/dataset";
+import { getDict } from "@/lib/i18n/server";
 import { formatPrice, formatCompact } from "@/lib/utils";
 import type { AgentProfileRow, UserRow } from "@/lib/database.types";
 import type { BadgeProps } from "@/components/ui/badge";
@@ -96,46 +97,45 @@ export default async function AdminPage() {
   const mom = momPct(stats.salesValueThisMonth, stats.salesValueLastMonth);
   const teams = await getGroupTeams();
   const teamBest = Math.max(...teams.map((t) => t.thisMonthValue), 1);
+  const t = (await getDict()).admin;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Group Manager</h1>
-        <p className="text-muted-foreground">
-          Prestasi & persaingan sihat seluruh kumpulan — Super Ren Group.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+        <p className="text-muted-foreground">{t.subtitle}</p>
         <DemoBadge className="mt-2" />
       </div>
 
       {/* Group KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard label="Jumlah Agen" value={overview.totalAgents} icon={Users} />
+        <StatCard label={t.totalAgents} value={overview.totalAgents} icon={Users} />
         <StatCard
-          label="Agen Aktif"
+          label={t.activeAgents}
           value={overview.activeAgents}
           icon={UserCheck}
           tone="success"
         />
         <StatCard
-          label="Menunggu"
+          label={t.pending}
           value={overview.pendingAgents}
           icon={UserPlus}
-          hint="pending"
+          hint={t.pendingHint}
         />
         <StatCard
-          label="Jualan Bulan Ini"
+          label={t.salesThisMonth}
           value={`RM ${Math.round(stats.salesValueThisMonth / 1000)}k`}
-          hint={`${mom.up ? "▲" : "▼"} ${mom.pct}% vs bln lalu`}
+          hint={`${mom.up ? "▲" : "▼"} ${mom.pct}%`}
           icon={TrendingUp}
           tone="gold"
         />
         <StatCard
-          label="Total Listings"
+          label={t.totalListings}
           value={stats.totalListings}
           icon={Building2}
         />
         <StatCard
-          label="Komisen (closed)"
+          label={t.commission}
           value={formatPrice(stats.totalCommission)}
           icon={Wallet}
           tone="gold"
@@ -145,7 +145,7 @@ export default async function AdminPage() {
       {/* Leaderboard */}
       <Card>
         <CardHeader>
-          <CardTitle>🏆 Carta Top 10 Agen</CardTitle>
+          <CardTitle>{t.leaderboard}</CardTitle>
         </CardHeader>
         <CardContent>
           <AgentLeaderboard
@@ -159,16 +159,17 @@ export default async function AdminPage() {
       {teams.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Perbandingan Pasukan ({teams.length} Team Leader)</CardTitle>
+            <CardTitle>{t.teamComparison(teams.length)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {teams.map((tm, i) => (
               <div key={tm.leaderId}>
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span className="font-medium text-foreground">
-                    {i + 1}. Pasukan {tm.leaderName}
+                    {t.teamLabel(i + 1, tm.leaderName)}
                     <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      · {tm.memberCount} ejen
+                      {" "}
+                      {t.agentsCount(tm.memberCount)}
                     </span>
                   </span>
                   <span className="font-semibold">
@@ -193,8 +194,7 @@ export default async function AdminPage() {
                   />
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {tm.thisMonthClosed} closed bln ini · purata RM{" "}
-                  {formatCompact(tm.avgPerAgent)} / ejen
+                  {t.teamFoot(tm.thisMonthClosed, formatCompact(tm.avgPerAgent))}
                 </p>
               </div>
             ))}
@@ -206,7 +206,7 @@ export default async function AdminPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Nilai Jualan Kumpulan (6 Bulan)</CardTitle>
+            <CardTitle>{t.groupSales}</CardTitle>
           </CardHeader>
           <CardContent>
             <MoneyBarChart data={stats.monthlySales} />
@@ -214,7 +214,7 @@ export default async function AdminPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Status Deal (Intelligence)</CardTitle>
+            <CardTitle>{t.dealIntel}</CardTitle>
           </CardHeader>
           <CardContent>
             <DealStatusBreakdown data={stats.dealStatusBreakdown} />
@@ -225,11 +225,11 @@ export default async function AdminPage() {
       {/* Users */}
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Pengguna ({userRows.length})</CardTitle>
+          <CardTitle>{t.users(userRows.length)}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {userRows.length === 0 ? (
-            <EmptyState icon={Users} title="Tiada pengguna" />
+            <EmptyState icon={Users} title={t.noUsers} />
           ) : (
             <ul className="max-h-[480px] divide-y divide-border overflow-y-auto">
               {userRows.map((u) => {

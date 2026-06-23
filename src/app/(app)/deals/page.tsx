@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Handshake, CheckCircle2, Wallet, Clock } from "lucide-react";
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getDeals } from "@/lib/data/deals";
+import { getDict } from "@/lib/i18n/server";
 import { formatPrice } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/empty-state";
@@ -16,6 +17,7 @@ export default async function DealsPage() {
   const { deals, listingTitles } = await getDeals(
     admin ? {} : { ownerId: user.id },
   );
+  const t = (await getDict()).deals;
   const stamp = user.profile
     ? {
         name: user.profile.display_name || user.profile.full_name,
@@ -55,34 +57,32 @@ export default async function DealsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tawaran</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
         <p className="text-muted-foreground">
-          {admin
-            ? "Urus & jejak semua deal kumpulan — booking hingga closed."
-            : "Urus & jejak deal anda — dari booking hingga closed."}
+          {admin ? t.subtitleAdmin : t.subtitleAgent}
         </p>
         <DemoBadge className="mt-2" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Jumlah Tawaran" value={deals.length} icon={Handshake} />
+        <StatCard label={t.total} value={deals.length} icon={Handshake} />
         <StatCard
-          label="Dalam Pipeline"
+          label={t.inPipeline}
           value={openCount}
-          hint="booking + pending"
+          hint={t.inPipelineHint}
           icon={Clock}
           tone="gold"
         />
         <StatCard
-          label="Closed"
+          label={t.closed}
           value={closed.length}
           icon={CheckCircle2}
           tone="success"
         />
         <StatCard
-          label="Komisen (closed)"
+          label={t.commission}
           value={formatPrice(totalCommission)}
-          hint={`purata ${avgDaysToClose} hari tutup`}
+          hint={t.avgCloseHint(avgDaysToClose)}
           icon={Wallet}
           tone="gold"
         />
@@ -91,8 +91,8 @@ export default async function DealsPage() {
       {deals.length === 0 ? (
         <EmptyState
           icon={Handshake}
-          title="Tiada tawaran lagi"
-          description="Tawaran akan muncul di sini apabila booking atau jualan direkodkan."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
         />
       ) : (
         <DealsBoard

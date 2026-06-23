@@ -14,6 +14,7 @@ import {
 import { requireOnboardedUser, isAdmin } from "@/lib/auth";
 import { getDashboardStats, getSwot, getAgentStanding } from "@/lib/data/stats";
 import { CATEGORY_LABELS, LISTING_STATUS_LABELS } from "@/lib/constants";
+import { getDict } from "@/lib/i18n/server";
 import { formatCompact, formatPrice } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
@@ -37,11 +38,13 @@ export default async function DashboardPage() {
   const admin = isAdmin(user.role);
   const scope = admin ? {} : { ownerId: user.id };
 
-  const [stats, swot, standing] = await Promise.all([
+  const [stats, swot, standing, dict] = await Promise.all([
     getDashboardStats(scope),
     getSwot(scope),
     admin ? Promise.resolve(null) : getAgentStanding(user.id),
+    getDict(),
   ]);
+  const t = dict.dashboard;
 
   const statusData = stats.byStatus
     .map((s) => ({ label: LISTING_STATUS_LABELS[s.status], count: s.count }))
@@ -71,19 +74,17 @@ export default async function DashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">
-              Hi, {greeting} 👋
+              {t.greeting(greeting ?? "")}
             </h1>
           </div>
           <p className="text-muted-foreground">
-            {admin
-              ? "Ringkasan prestasi seluruh kumpulan."
-              : "Ringkasan prestasi jualan anda bulan ini."}
+            {admin ? t.subtitleAdmin : t.subtitleAgent}
           </p>
           <DemoBadge className="mt-2" />
         </div>
         <Button asChild>
           <Link href="/listings/new">
-            <PlusCircle className="h-4 w-4" /> Add Listing
+            <PlusCircle className="h-4 w-4" /> {dict.common.addListing}
           </Link>
         </Button>
       </div>
@@ -96,58 +97,61 @@ export default async function DashboardPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard
-          label="Active Listings"
+          label={t.activeListings}
           value={stats.activeListings}
-          hint={`${stats.totalListings} jumlah listing`}
+          hint={t.totalListingsHint(stats.totalListings)}
           icon={Building2}
         />
         <StatCard
-          label="Shares (bulan ini)"
+          label={t.sharesThisMonth}
           value={stats.sharesThisMonth}
           icon={Share2}
           tone="gold"
         />
         <StatCard
-          label="Leads (bulan ini)"
+          label={t.leadsThisMonth}
           value={stats.leadsThisMonth}
           icon={Users}
         />
         <StatCard
-          label="Bookings (bulan ini)"
+          label={t.bookingsThisMonth}
           value={stats.bookingsThisMonth}
           icon={CalendarCheck}
         />
         <StatCard
-          label="Closed (bulan ini)"
+          label={t.closedThisMonth}
           value={stats.closedThisMonth}
           icon={CheckCircle2}
           tone="success"
         />
         <StatCard
-          label="Nilai Jualan (bln ini)"
+          label={t.salesThisMonth}
           value={`RM ${formatCompact(stats.salesValueThisMonth)}`}
-          hint={`${salesMoM >= 0 ? "▲" : "▼"} ${Math.abs(salesMoM)}% vs bln lalu`}
+          hint={t.vsLastMonth(salesMoM >= 0 ? "▲" : "▼", Math.abs(salesMoM))}
           icon={CheckCircle2}
           tone="gold"
         />
         <StatCard
-          label="Conversion Rate"
+          label={t.conversionRate}
           value={`${stats.conversionRate}%`}
-          hint="lead → closed"
+          hint={t.leadToClosed}
           icon={Percent}
         />
         <StatCard
-          label="Avg Days to Close"
+          label={t.avgDaysToClose}
           value={stats.avgDaysToClose}
-          hint="hari"
+          hint={dict.common.days}
           icon={Clock}
         />
         <StatCard
-          label="Top Area"
+          label={t.topArea}
           value={stats.topArea ?? "—"}
           hint={
             stats.topCategory
-              ? `Kategori: ${CATEGORY_LABELS[stats.topCategory as keyof typeof CATEGORY_LABELS] ?? stats.topCategory}`
+              ? t.category(
+                  CATEGORY_LABELS[stats.topCategory as keyof typeof CATEGORY_LABELS] ??
+                    stats.topCategory,
+                )
               : undefined
           }
           icon={MapPin}
@@ -159,7 +163,7 @@ export default async function DashboardPage() {
       {standing ? (
         <Card>
           <CardHeader>
-            <CardTitle>🏆 Carta Top 10 Agen — Persaingan Sihat</CardTitle>
+            <CardTitle>{t.leaderboardTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <AgentLeaderboard
@@ -174,9 +178,9 @@ export default async function DashboardPage() {
       {admin ? (
         <Card>
           <CardContent className="flex flex-wrap items-center gap-x-8 gap-y-3 p-4 text-sm">
-            <Metric label="Total Commission (closed)" value={formatPrice(stats.totalCommission)} />
-            <Metric label="Stale listings" value={String(stats.staleListings)} />
-            <Metric label="Total views" value={formatCompact(stats.funnel[0]?.count ?? 0)} />
+            <Metric label={t.totalCommission} value={formatPrice(stats.totalCommission)} />
+            <Metric label={t.staleListings} value={String(stats.staleListings)} />
+            <Metric label={t.totalViews} value={formatCompact(stats.funnel[0]?.count ?? 0)} />
           </CardContent>
         </Card>
       ) : null}
@@ -185,7 +189,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Leads</CardTitle>
+            <CardTitle>{t.monthlyLeads}</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyLineChart data={stats.monthlyLeads} />
@@ -193,7 +197,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Closed Deals</CardTitle>
+            <CardTitle>{t.monthlyClosed}</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyLineChart data={stats.monthlyClosed} color="hsl(41 52% 54%)" />
@@ -201,7 +205,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Nilai Jualan (6 Bulan)</CardTitle>
+            <CardTitle>{t.salesValue6m}</CardTitle>
           </CardHeader>
           <CardContent>
             <MoneyBarChart data={stats.monthlySales} />
@@ -209,7 +213,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Status Deal</CardTitle>
+            <CardTitle>{t.dealStatus}</CardTitle>
           </CardHeader>
           <CardContent>
             <DealStatusBreakdown data={stats.dealStatusBreakdown} />
@@ -217,7 +221,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Conversion Funnel</CardTitle>
+            <CardTitle>{t.conversionFunnel}</CardTitle>
           </CardHeader>
           <CardContent>
             <Funnel data={stats.funnel} />
@@ -225,28 +229,28 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Area Performance</CardTitle>
+            <CardTitle>{t.areaPerformance}</CardTitle>
           </CardHeader>
           <CardContent>
             {areaData.length ? (
               <SimpleBarChart data={areaData} />
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Tiada data kawasan lagi.
+                {t.noArea}
               </p>
             )}
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Listing Status Distribution</CardTitle>
+            <CardTitle>{t.statusDistribution}</CardTitle>
           </CardHeader>
           <CardContent>
             {statusData.length ? (
               <SimpleBarChart data={statusData} color="hsl(211 63% 16%)" />
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Tiada listing lagi.
+                {t.noListing}
               </p>
             )}
           </CardContent>

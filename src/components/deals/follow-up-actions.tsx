@@ -2,6 +2,7 @@
 
 import { Phone, MessageSquare } from "lucide-react";
 import { buildFollowUpMessage, type AgentStamp } from "@/lib/share";
+import { useLanguage } from "@/contexts/language-context";
 import { MessageAssistant } from "@/components/deals/message-assistant";
 
 /**
@@ -27,9 +28,10 @@ export function FollowUpActions({
   priceText?: string | null;
   agent?: AgentStamp;
 }) {
+  const { lang } = useLanguage();
   const tel = phone.replace(/[^\d+]/g, "");
   const smsBody = encodeURIComponent(
-    buildFollowUpMessage(customerName, listingTitle, agent),
+    buildFollowUpMessage(customerName, listingTitle, agent, lang),
   );
 
   return (

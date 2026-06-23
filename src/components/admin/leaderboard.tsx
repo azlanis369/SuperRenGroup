@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ArrowUp, ArrowDown, Minus, Trophy } from "lucide-react";
-import { SECTOR_LABELS, type Sector } from "@/lib/constants";
+import { type Sector } from "@/lib/constants";
+import { useLanguage } from "@/contexts/language-context";
 import { formatCompact } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -33,12 +34,14 @@ export function AgentLeaderboard({
   highlightUserId?: string;
 }) {
   const [tab, setTab] = useState<Tab>("overall");
+  const { t } = useLanguage();
+  const tl = t.leaderboard;
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "overall", label: "Keseluruhan" },
+    { key: "overall", label: tl.overall },
     ...sectorLeaderboards.map((s) => ({
       key: s.sector as Tab,
-      label: SECTOR_LABELS[s.sector],
+      label: t.segment[s.sector],
     })),
   ];
 
@@ -69,7 +72,7 @@ export function AgentLeaderboard({
 
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Tiada jualan closed untuk sektor ini.
+          {tl.noSector}
         </p>
       ) : (
         <ol className="space-y-2">
@@ -83,10 +86,7 @@ export function AgentLeaderboard({
           ))}
         </ol>
       )}
-      <p className="mt-3 text-xs text-muted-foreground">
-        Disusun mengikut nilai jualan <strong>bulan ini</strong>. Anak panah
-        menunjukkan perubahan ranking berbanding bulan lalu.
-      </p>
+      <p className="mt-3 text-xs text-muted-foreground">{tl.note}</p>
     </div>
   );
 }
@@ -100,6 +100,8 @@ function LeaderItem({
   rank: number;
   highlight?: boolean;
 }) {
+  const { t } = useLanguage();
+  const tl = t.leaderboard;
   const medal =
     rank === 1
       ? "bg-gold text-white"
@@ -146,7 +148,7 @@ function LeaderItem({
           {row.name}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {row.area ?? "—"} · {row.thisMonthClosed} closed bulan ini
+          {row.area ?? "—"} · {tl.closedThisMonth(row.thisMonthClosed)}
         </p>
       </div>
 
@@ -155,7 +157,7 @@ function LeaderItem({
           RM {formatCompact(row.thisMonthValue)}
         </p>
         <p className="text-[11px] text-muted-foreground">
-          lalu: RM {formatCompact(row.lastMonthValue)}
+          {tl.lastMonth(formatCompact(row.lastMonthValue))}
         </p>
       </div>
 

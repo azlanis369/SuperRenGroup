@@ -10,6 +10,7 @@ import {
   type LeadSource,
 } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
+import { getDict } from "@/lib/i18n/server";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
@@ -51,17 +52,19 @@ export default async function LeadsPage({
       ? (sp.source as LeadSource)
       : undefined;
 
-  const [{ leads, listingTitles }, listingOptions] = await Promise.all([
+  const [{ leads, listingTitles }, listingOptions, dict] = await Promise.all([
     getLeads({ status, source }),
     getListingOptions(),
+    getDict(),
   ]);
+  const t = dict.leads;
 
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground">{leads.length} lead.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+          <p className="text-muted-foreground">{t.subtitle(leads.length)}</p>
           <DemoBadge className="mt-2" />
         </div>
         <NewLeadButton listings={listingOptions} />
@@ -72,8 +75,8 @@ export default async function LeadsPage({
       {leads.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="Tiada lead dijumpai"
-          description="Rekod prospek baru atau laraskan penapis."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
           action={<NewLeadButton listings={listingOptions} />}
         />
       ) : (
@@ -83,12 +86,12 @@ export default async function LeadsPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Nama</th>
-                  <th className="px-4 py-3 font-medium">Telefon</th>
-                  <th className="px-4 py-3 font-medium">Sumber</th>
-                  <th className="px-4 py-3 font-medium">Listing</th>
-                  <th className="px-4 py-3 font-medium">Tarikh</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">{t.colName}</th>
+                  <th className="px-4 py-3 font-medium">{t.colPhone}</th>
+                  <th className="px-4 py-3 font-medium">{t.colSource}</th>
+                  <th className="px-4 py-3 font-medium">{t.colListing}</th>
+                  <th className="px-4 py-3 font-medium">{t.colDate}</th>
+                  <th className="px-4 py-3 font-medium">{t.colStatus}</th>
                 </tr>
               </thead>
               <tbody>
