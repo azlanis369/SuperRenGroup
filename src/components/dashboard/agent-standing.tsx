@@ -76,7 +76,7 @@ export function AgentStandingCard({
           <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-white/70">
             <Target className="h-3.5 w-3.5 text-gold" /> {s.achievement(year)}
           </p>
-          <p className="mt-1 text-2xl font-extrabold text-gold">
+          <p className="mt-1 whitespace-nowrap text-2xl font-extrabold tabular-nums text-gold">
             {formatPrice(standing.yearValue)}
           </p>
           <p className="text-sm text-white/80">
