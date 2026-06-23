@@ -116,18 +116,36 @@ export function ProfileForm({
     }
     setUploading(true);
     setError(null);
+
+    // Always produce a local, backend-free preview that works in demo.
+    let dataUrl: string | null = null;
     try {
-      if (LOCAL_DEMO) {
-        // No storage backend — keep a resized data URL we can persist locally.
-        const dataUrl = await fileToResizedDataUrl(file);
+      dataUrl = await fileToResizedDataUrl(file);
+    } catch {
+      dataUrl = null;
+    }
+
+    try {
+      if (!LOCAL_DEMO) {
+        // Real mode: upload to storage; if the bucket is missing, fall back.
+        try {
+          const compressed = await compressImage(file);
+          const { url } = await uploadToStorage(compressed, "avatars");
+          setPhotoUrl(url);
+          return;
+        } catch {
+          if (!dataUrl) {
+            setError("Gagal memuat naik foto. Pastikan bucket storage wujud.");
+            return;
+          }
+          // fall through to use the local data URL
+        }
+      }
+      if (dataUrl) {
         setPhotoUrl(dataUrl);
       } else {
-        const compressed = await compressImage(file);
-        const { url } = await uploadToStorage(compressed, "avatars");
-        setPhotoUrl(url);
+        setError("Gagal memproses imej. Cuba gambar format JPG, PNG atau WebP.");
       }
-    } catch {
-      setError("Gagal memuat naik foto. Pastikan bucket storage wujud.");
     } finally {
       setUploading(false);
     }
@@ -145,9 +163,10 @@ export function ProfileForm({
         setError(res.error);
         return;
       }
-      // Persist photo if changed.
+      // Persist photo if changed. A data: URL is a local (demo) image and is
+      // kept in localStorage; an http URL came from real storage.
       if (photoUrl && photoUrl !== profile?.profile_photo_url) {
-        if (LOCAL_DEMO) {
+        if (photoUrl.startsWith("data:")) {
           if (userId) setDemoPhoto(userId, photoUrl);
         } else {
           await fetch("/api/profile/photo", {
