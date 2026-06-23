@@ -37,7 +37,7 @@ export function PublicListingCard({
         </div>
       </div>
       <div className="p-3">
-        <p className="font-bold text-primary">
+        <p className="whitespace-nowrap font-bold tabular-nums text-primary">
           {listing.price_display || formatPrice(listing.price)}
         </p>
         <h3 className="line-clamp-1 text-sm font-semibold">{listing.title}</h3>

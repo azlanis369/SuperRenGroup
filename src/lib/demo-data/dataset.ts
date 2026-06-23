@@ -305,7 +305,7 @@ export const azlanProfile: AgentProfileRow = {
   profile_photo_url: "/demo/agents/agent-azlan.svg",
   ren_number: "REN 39593",
   agency_name: AGENCY_NAME,
-  title: "Group Team Manager · Chester Properties HQ",
+  title: "Group Team Manager · Super Ren Group",
   phone: "+60 19-823 6383",
   whatsapp: "+60198236383",
   email: "amirul@superren.demo",
@@ -696,7 +696,7 @@ function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
     const area = areaFor();
     makeListing({
       agent, cat, area,
-      status: pick(["available", "available", "interested", "viewing_scheduled"]),
+      status: pick(["available", "available", "available", "viewing_scheduled"]),
       ageDays: between(3, 130),
       withMedia: !!opts.rich,
       pool: poolFor(cat),

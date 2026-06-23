@@ -79,7 +79,6 @@ export const FURNISHING_LABELS: Record<Furnishing, string> = {
 export const LISTING_STATUSES = [
   "draft",
   "available",
-  "interested",
   "viewing_scheduled",
   "booked",
   "loan_in_progress",
@@ -95,7 +94,6 @@ export type ListingStatus = (typeof LISTING_STATUSES)[number];
 export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
   draft: "Draft",
   available: "Available",
-  interested: "Interested",
   viewing_scheduled: "Viewing Scheduled",
   booked: "Booked",
   loan_in_progress: "Loan In Progress",
@@ -114,7 +112,6 @@ export const LISTING_STATUS_TONE: Record<
 > = {
   draft: "neutral",
   available: "success",
-  interested: "info",
   viewing_scheduled: "info",
   booked: "gold",
   loan_in_progress: "warning",
