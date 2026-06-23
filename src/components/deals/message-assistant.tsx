@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Bot, MessageCircle, Copy, Check } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useWhatsApp } from "@/components/whatsapp/whatsapp-provider";
-import { messagePack, type MsgCtx } from "@/lib/message-templates";
+import { messagePack, type MsgCtx, type Tone } from "@/lib/message-templates";
 import type { AgentStamp } from "@/lib/share";
 import {
   Dialog,
@@ -37,12 +37,14 @@ export function MessageAssistant({
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
+  const [tone, setTone] = useState<Tone>("mesra");
   const { lang, t } = useLanguage();
   const { open: openWhatsApp } = useWhatsApp();
   const ta = t.autobot;
 
   const ctx: MsgCtx = { customerName, listingTitle, priceText, agent };
-  const pack = messagePack(kind, status, ctx, lang);
+  const pack = messagePack(kind, status, ctx, lang, tone);
+  const TONES: Tone[] = ["mesra", "formal", "ringkas", "lembut", "urgent"];
 
   async function copy(i: number, text: string) {
     await navigator.clipboard.writeText(text);
@@ -70,8 +72,30 @@ export function MessageAssistant({
           {pack.tip}
         </div>
 
-        {/* Drafted messages */}
-        <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+        {/* Tone selector */}
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+            {ta.toneLabel}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {TONES.map((to) => (
+              <button
+                key={to}
+                onClick={() => setTone(to)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  tone === to
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {ta.tone[to]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Drafted messages (preview before sending) */}
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto">
           {pack.items.map((it, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

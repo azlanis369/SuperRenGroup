@@ -17,6 +17,58 @@ export type MsgCtx = {
 export type Suggestion = { label: string; text: string };
 export type MsgPack = { tip: string; items: Suggestion[] };
 
+export type Tone = "mesra" | "formal" | "ringkas" | "lembut" | "urgent";
+
+const EMOJI =
+  /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu;
+
+/** Re-tone a message body (greeting/wording), preserving the agent stamp. */
+function applyTone(body: string, tone: Tone, lang: Lang): string {
+  const en = lang === "en";
+  switch (tone) {
+    case "formal":
+      return body
+        .replace(/^Hi\b/, en ? "Dear" : "Salam sejahtera,")
+        .replace(EMOJI, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .replace(/ +([.,!?])/g, "$1")
+        .trim();
+    case "ringkas": {
+      const clean = body.replace(EMOJI, "").replace(/[ \t]{2,}/g, " ").trim();
+      const sentences = clean.match(/[^.!?]+[.!?]+/g);
+      // Keep greeting + the first substantive sentence.
+      return sentences ? sentences.slice(0, 2).join(" ").trim() : clean;
+    }
+    case "lembut":
+      return (en ? "Sorry to bother you 🙏 " : "Mohon maaf mengganggu 🙏 ") + body;
+    case "urgent":
+      return (
+        body +
+        (en
+          ? "\n\n⏰ Kindly respond as soon as possible. Thank you!"
+          : "\n\n⏰ Mohon maklum balas secepat mungkin. Terima kasih!")
+      );
+    default:
+      return body;
+  }
+}
+
+/** Apply a tone to every suggestion in a pack without touching the stamp. */
+function tonePack(pack: MsgPack, ctx: MsgCtx, tone: Tone, lang: Lang): MsgPack {
+  if (tone === "mesra") return pack;
+  const stamp = buildAgentStamp(ctx.agent);
+  return {
+    ...pack,
+    items: pack.items.map((it) => {
+      const body =
+        stamp && it.text.endsWith(stamp)
+          ? it.text.slice(0, it.text.length - stamp.length)
+          : it.text;
+      return { ...it, text: applyTone(body, tone, lang) + stamp };
+    }),
+  };
+}
+
 function hi(ctx: MsgCtx): string {
   return ctx.customerName ? `Hi ${ctx.customerName},` : "Hi,";
 }
@@ -310,8 +362,11 @@ export function messagePack(
   status: string,
   ctx: MsgCtx,
   lang: Lang = "ms",
+  tone: Tone = "mesra",
 ): MsgPack {
-  return kind === "deal"
-    ? dealPack(status as DealStatus, ctx, lang)
-    : leadPack(status as LeadStatus, ctx, lang);
+  const pack =
+    kind === "deal"
+      ? dealPack(status as DealStatus, ctx, lang)
+      : leadPack(status as LeadStatus, ctx, lang);
+  return tonePack(pack, ctx, tone, lang);
 }
