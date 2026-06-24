@@ -120,6 +120,13 @@ export default async function AgentProfilePage({
       : areasList.join(", ");
   const defaultHeadline = `Pakar Jual, Sewa & Komersial Hartanah ${focusLabel}`;
 
+  // Short content version so a re-share forces WhatsApp/social to re-fetch the
+  // preview when the agent's info changes (it caches previews by exact URL).
+  const shareVersion = shortHash(
+    `${name}|${profile.title ?? ""}|${profile.headline ?? ""}|${focusFull}`,
+  );
+  const shareUrl = `${profileUrl}?v=${shareVersion}`;
+
   // Listing hygiene: only public-safe statuses, split active vs portfolio.
   const active = listings.filter((l) => ACTIVE_STATUSES.includes(l.status));
   const portfolio = listings
@@ -193,7 +200,7 @@ export default async function AgentProfilePage({
             <a href="#about" className="hover:text-foreground">About</a>
             <a href={intent(`Salam ${firstName}, saya ada pertanyaan.`)} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">Contact</a>
           </nav>
-          <ProfileShareButton url={profileUrl} name={name} />
+          <ProfileShareButton url={shareUrl} name={name} />
         </div>
       </header>
 
@@ -527,11 +534,18 @@ export default async function AgentProfilePage({
       <ProfileStickyCta
         whatsappUrl={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)}
         phone={profile.phone}
-        url={profileUrl}
+        url={shareUrl}
         name={name}
       />
     </div>
   );
+}
+
+/** Tiny stable hash → short base36 string (for a share cache-buster). */
+function shortHash(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h).toString(36).slice(0, 6);
 }
 
 function TrustChip({ children }: { children: React.ReactNode }) {
