@@ -30,7 +30,6 @@ import { Logo } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
-import { DemoTag } from "@/components/demo-badge";
 import { ListingGallery } from "@/components/public/listing-gallery";
 import { AgentContactCard } from "@/components/public/agent-contact-card";
 import { ShareButton } from "@/components/listings/share-button";
@@ -96,7 +95,6 @@ export default async function PublicListingPage({
     notFound();
   }
   const { listing, media } = data;
-  const isDemo = (listing as { is_demo?: boolean }).is_demo;
   const agent = await getListingAgent(listing.agent_id);
 
   // JSON-LD — RealEstateListing
@@ -156,7 +154,6 @@ export default async function PublicListingPage({
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Badge tone="primary">{CATEGORY_LABELS[listing.category]}</Badge>
                 <StatusBadge status={listing.status} />
-                {isDemo ? <DemoTag>Demo Listing</DemoTag> : null}
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-balance">
                 {listing.title}

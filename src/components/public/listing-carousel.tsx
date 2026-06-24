@@ -9,10 +9,12 @@ export function ListingCarousel({
   title,
   listings,
   accent = false,
+  waNumber,
 }: {
   title: string;
   listings: (ListingRow & { is_demo?: boolean })[];
   accent?: boolean;
+  waNumber?: string | null;
 }) {
   if (listings.length === 0) return null;
   return (
@@ -27,7 +29,7 @@ export function ListingCarousel({
       <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {listings.map((l, i) => (
           <div key={l.id} className="w-[260px] shrink-0 snap-start sm:w-[280px]">
-            <PublicListingCard listing={l} index={i + 1} />
+            <PublicListingCard listing={l} index={i + 1} waNumber={waNumber} />
           </div>
         ))}
       </div>
