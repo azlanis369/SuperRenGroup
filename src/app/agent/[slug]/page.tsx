@@ -115,13 +115,6 @@ export default async function AgentProfilePage({
   const focusFull = areasList.length ? areasList.join(", ") : "Ampang & Kuala Lumpur";
   const defaultHeadline = `Pakar Jual, Sewa & Komersial Hartanah ${focusLabel}`;
 
-  // Share URL carries current info so the WhatsApp/social preview (whose
-  // crawler has no cookie) matches what the agent sees.
-  const shareParams = new URLSearchParams({ n: name });
-  if (profile.title) shareParams.set("r", profile.title);
-  shareParams.set("h", profile.headline || defaultHeadline);
-  const shareUrl = `${profileUrl}?${shareParams.toString()}`;
-
   // Listing hygiene: only public-safe statuses, split active vs portfolio.
   const active = listings.filter((l) => ACTIVE_STATUSES.includes(l.status));
   const portfolio = listings
@@ -195,7 +188,7 @@ export default async function AgentProfilePage({
             <a href="#about" className="hover:text-foreground">About</a>
             <a href={intent(`Salam ${firstName}, saya ada pertanyaan.`)} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">Contact</a>
           </nav>
-          <ProfileShareButton url={shareUrl} name={name} />
+          <ProfileShareButton url={profileUrl} name={name} />
         </div>
       </header>
 
@@ -529,7 +522,7 @@ export default async function AgentProfilePage({
       <ProfileStickyCta
         whatsappUrl={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)}
         phone={profile.phone}
-        url={shareUrl}
+        url={profileUrl}
         name={name}
       />
     </div>
