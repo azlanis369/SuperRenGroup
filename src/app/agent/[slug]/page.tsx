@@ -18,6 +18,10 @@ import {
   Users,
   Building2,
   CheckCircle2,
+  Award,
+  TrendingUp,
+  UserPlus,
+  Sparkles,
 } from "lucide-react";
 import { getPublicAgent } from "@/lib/data/agents";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
@@ -28,16 +32,16 @@ import { Logo } from "@/components/brand";
 import { DemoAvatar } from "@/components/public/demo-avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DemoTag } from "@/components/demo-badge";
 import { QrCode } from "@/components/public/qr-code";
 import { TrackedLink } from "@/components/tracked-link";
 import { ListingCarousel } from "@/components/public/listing-carousel";
 import { ProfileShareButton } from "@/components/public/profile-share-button";
+import { ProfileStickyCta } from "@/components/public/profile-sticky-cta";
+import { LeadCaptureForm } from "@/components/public/lead-capture-form";
 
 // Listing statuses safe to show publicly.
 const ACTIVE_STATUSES = [
   "available",
-  "interested",
   "viewing_scheduled",
   "booked",
   "loan_in_progress",
@@ -82,7 +86,6 @@ export default async function AgentProfilePage({
   const data = await getPublicAgent(slug);
   if (!data) notFound();
   const { profile, listings } = data;
-  const isDemo = (profile as { is_demo?: boolean }).is_demo;
   const name = profile.display_name || profile.full_name;
   const firstName = name.split(" ")[0];
   const profileUrl = absoluteUrl(`/agent/${slug}`);
@@ -119,10 +122,10 @@ export default async function AgentProfilePage({
   ].filter((s) => s.url);
 
   const ctas = [
-    { label: "Saya Nak Jual Rumah", icon: Home, event: "profile_cta_sell" as const, msg: `Salam ${firstName}, saya pemilik rumah di kawasan Ampang/KL dan ingin tahu anggaran harga pasaran serta cara tuan boleh bantu jualkan unit saya.` },
-    { label: "Saya Nak Sewakan Unit", icon: Key, event: "profile_cta_rent" as const, msg: `Salam ${firstName}, saya ada unit untuk disewakan dan ingin tahu cara tuan boleh bantu cari tenant yang sesuai.` },
-    { label: "Saya Nak Cari Rumah", icon: Search, event: "profile_cta_buy" as const, msg: `Salam ${firstName}, saya sedang mencari rumah sekitar Ampang/KL. Boleh bantu cadangkan unit yang sesuai dengan bajet dan keperluan saya?` },
-    { label: "Saya Nak Join Team", icon: Users, event: "profile_cta_join_team" as const, msg: `Salam ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang menyertai team hartanah tuan.` },
+    { label: "Saya Nak Jual Rumah", sub: "Semak harga pasaran & strategi jualan.", icon: Home, event: "profile_cta_sell" as const, msg: `Hi ${firstName}, saya berminat untuk jual rumah. Boleh bantu semak harga pasaran dan strategi jualan?` },
+    { label: "Saya Nak Sewakan Unit", sub: "Cari tenant dan urus enquiry.", icon: Key, event: "profile_cta_rent" as const, msg: `Hi ${firstName}, saya berminat untuk sewakan unit. Boleh bantu semak potensi rental dan cari tenant?` },
+    { label: "Saya Nak Cari Rumah", sub: "Beli atau sewa sekitar Ampang / KL.", icon: Search, event: "profile_cta_buy" as const, msg: `Hi ${firstName}, saya sedang mencari rumah sekitar Ampang / KL. Boleh bantu saya?` },
+    { label: "Saya Nak Join Team", sub: "Sertai team hartanah Amirul.", icon: Users, event: "profile_cta_join_team" as const, msg: `Hi ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang join team Super Ren Group.` },
   ];
 
   // JSON-LD — RealEstateAgent
@@ -151,7 +154,7 @@ export default async function AgentProfilePage({
   ].filter(Boolean) as { n: number; label: string }[];
 
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className="min-h-screen bg-background pb-28 lg:pb-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -184,7 +187,6 @@ export default async function AgentProfilePage({
                 className="h-24 w-24 border-4 border-card shadow-md"
                 fallbackClassName="text-2xl"
               />
-              {isDemo ? <DemoTag>Demo Profile</DemoTag> : null}
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -200,6 +202,15 @@ export default async function AgentProfilePage({
                 {[profile.title, profile.agency_name].filter(Boolean).join(" · ")}
               </p>
             ) : null}
+
+            {/* Positioning headline */}
+            <p className="mt-2 text-base font-semibold text-foreground">
+              Pakar Jual, Sewa &amp; Komersial Hartanah Ampang / KL
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Bantu pemilik rumah, buyer, tenant dan agent baru dengan sistem
+              pemasaran hartanah yang lebih tersusun.
+            </p>
             {profile.service_areas?.length ? (
               <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
@@ -213,18 +224,36 @@ export default async function AgentProfilePage({
                 : `Saya membantu pemilik, pembeli dan penyewa di ${(profile.service_areas ?? ["Ampang"])[0]} serta sekitar Kuala Lumpur membuat keputusan hartanah dengan lebih jelas — daripada semakan harga pasaran, pemasaran, saringan prospek, viewing, rundingan sehingga proses jual/sewa selesai.`}
             </p>
 
-            {/* Intent CTAs */}
-            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {ctas.map((c) => {
-                const Icon = c.icon;
-                return (
-                  <Button key={c.label} asChild variant="success" className="justify-start">
-                    <TrackedLink event={c.event} href={intent(c.msg)} target="_blank" rel="noopener noreferrer">
-                      <Icon className="h-4 w-4" /> {c.label}
+            {/* Intent CTAs — "Saya mahu…" */}
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-semibold text-foreground">Saya mahu…</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {ctas.map((c) => {
+                  const Icon = c.icon;
+                  return (
+                    <TrackedLink
+                      key={c.label}
+                      event={c.event}
+                      href={intent(c.msg)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-50/60 p-3 text-left transition-colors hover:bg-emerald-100/70"
+                    >
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">
+                          {c.label}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {c.sub}
+                        </span>
+                      </span>
                     </TrackedLink>
-                  </Button>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Direct contact + socials + QR */}
@@ -328,16 +357,44 @@ export default async function AgentProfilePage({
           </div>
         </section>
 
+        {/* Why choose me — trust */}
+        <section className="mt-6">
+          <h2 className="mb-3 text-lg font-bold">Kenapa Pilih {firstName}?</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <HelpCard
+              icon={BadgeCheck}
+              title="REN Berdaftar"
+              desc={`${profile.ren_number ?? "REN berdaftar"}${profile.agency_name ? ` di bawah ${profile.agency_name}` : ""}.`}
+            />
+            <HelpCard
+              icon={MapPin}
+              title="Fokus Kawasan Ampang / KL"
+              desc={(profile.service_areas ?? ["Ampang"]).join(", ") + "."}
+            />
+            <HelpCard
+              icon={Award}
+              title="Team & Sistem"
+              desc={`${profile.title ?? "Group Team Manager"} dengan sokongan ${profile.agency_name ?? "Super Ren Group"}.`}
+            />
+            <HelpCard
+              icon={TrendingUp}
+              title="Rekod Listing & Transaksi"
+              desc={`${active.length} listing aktif dan ${portfolio.length} sold/rented dipaparkan di halaman ini.`}
+            />
+          </div>
+        </section>
+
         {/* Listings */}
         <div id="listings">
           {featured.length ? (
-            <ListingCarousel title="Listing Unggulan" listings={featured} accent />
+            <ListingCarousel title="Listing Unggulan" listings={featured} accent waNumber={profile.whatsapp} />
           ) : null}
           {bySegment.map((group) => (
             <ListingCarousel
               key={group.seg}
               title={SEGMENT_LABELS[group.seg]}
               listings={group.items}
+              waNumber={profile.whatsapp}
             />
           ))}
           {active.length === 0 ? (
@@ -349,8 +406,50 @@ export default async function AgentProfilePage({
 
         {/* Recently sold / rented */}
         {portfolio.length ? (
-          <ListingCarousel title="Recently Sold / Rented" listings={portfolio} />
+          <ListingCarousel title="Recently Sold / Rented" listings={portfolio} waNumber={profile.whatsapp} />
         ) : null}
+
+        {/* Lead capture */}
+        <section className="mt-8">
+          <LeadCaptureForm waNumber={wa} firstName={firstName} />
+        </section>
+
+        {/* Join team */}
+        <section className="mt-6 overflow-hidden rounded-2xl border border-gold/30 bg-gold/5 p-5">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <UserPlus className="h-5 w-5 text-gold" /> Nak Join Team {firstName}?
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sesuai untuk individu yang mahu belajar sistem kerja hartanah dengan
+            lebih tersusun — sama ada agent baru, part-time, atau REN aktif yang
+            mahu berkembang bersama team.
+          </p>
+          <ul className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
+            {[
+              "Bimbingan asas kerja hartanah",
+              "Support listing dan pemasaran",
+              "Fokus kawasan Ampang / KL",
+              "Sistem follow-up & kerja tersusun",
+              "Sesuai untuk agent baru",
+              "Bina momentum bersama team",
+            ].map((b) => (
+              <li key={b} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <Button asChild variant="gold" className="mt-4">
+            <TrackedLink
+              event="profile_cta_join_team"
+              href={intent(`Hi ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang join team Super Ren Group.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <UserPlus className="h-4 w-4" /> Saya Berminat Join Team
+            </TrackedLink>
+          </Button>
+        </section>
 
         {/* FAQ */}
         <section className="mt-8">
@@ -359,6 +458,10 @@ export default async function AgentProfilePage({
             <Faq q="Kawasan mana yang dicover?" a={`Fokus utama ialah ${(profile.service_areas ?? ["Ampang"]).join(", ")} dan kawasan sekitar Kuala Lumpur.`} />
             <Faq q="Boleh bantu jual dan sewa?" a="Ya. Fokus meliputi subsale, rental dan commercial property bergantung kepada jenis unit dan lokasi." />
             <Faq q="Boleh bantu semak harga pasaran?" a="Ya. Pemilik boleh hubungi saya untuk semakan awal harga pasaran sebelum membuat keputusan jual atau sewa." />
+            <Faq q="Dokumen apa diperlukan jika saya mahu jual rumah?" a="Biasanya salinan geran/strata title jika ada, IC owner, maklumat loan, bil cukai pintu/cukai tanah, dan butiran unit. Saya boleh bantu semak keperluan awal." />
+            <Faq q="Berapa lama proses jual rumah?" a="Bergantung kepada harga, lokasi, keadaan pasaran, dokumen dan pembeli. Semakan awal boleh bantu tetapkan strategi harga dan pemasaran." />
+            <Faq q="Boleh bantu commercial property?" a="Ya, halaman ini turut memaparkan listing komersial dan saya boleh bantu pemilik atau buyer untuk hartanah komersial sekitar Ampang / KL." />
+            <Faq q="Adakah saya perlu bayar untuk semakan awal?" a="Untuk semakan awal, anda boleh hubungi saya dahulu bagi memahami situasi unit dan keperluan anda." />
             <Faq q="Apa beza listing aktif dan sold/rented?" a="Listing aktif ialah unit yang masih tersedia untuk enquiry. Sold/rented pula ialah rekod portfolio transaksi terdahulu." />
           </div>
         </section>
@@ -376,14 +479,29 @@ export default async function AgentProfilePage({
                 <MessageCircle className="h-4 w-4" /> WhatsApp {firstName}
               </TrackedLink>
             </Button>
+            {profile.phone ? (
+              <Button asChild variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10">
+                <TrackedLink event="click_call_profile" href={`tel:${toWaNumber(profile.phone)}`}>
+                  <Phone className="h-4 w-4" /> Call
+                </TrackedLink>
+              </Button>
+            ) : null}
           </div>
         </section>
 
         <p className="mt-8 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/40 p-4 text-center text-xs text-muted-foreground">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Profil ini dikongsi oleh agent berdaftar. Sila sahkan butiran profesional di mana perlu.
+          <Sparkles className="h-3.5 w-3.5" />
+          Maklumat hartanah tertakluk kepada perubahan tanpa notis. Sila sahkan
+          harga, status dan butiran dengan ejen sebelum membuat keputusan.
         </p>
       </main>
+
+      <ProfileStickyCta
+        whatsappUrl={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)}
+        phone={profile.phone}
+        url={profileUrl}
+        name={name}
+      />
     </div>
   );
 }
