@@ -52,22 +52,33 @@ const PORTFOLIO_STATUSES = ["sold", "rented"];
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const sp = await searchParams;
+  const one = (v: string | string[] | undefined) =>
+    (Array.isArray(v) ? v[0] : v) || undefined;
   const data = await getPublicAgent(slug);
   if (!data) return { title: "Profil tidak dijumpai" };
   const p = data.profile;
-  const name = p.display_name || p.full_name;
-  const role = p.title ?? "Ejen Hartanah";
+  // Share links carry the agent's current (possibly edited) info so the
+  // WhatsApp/social crawler — which has no per-browser cookie — still previews
+  // what the agent sees. Falls back to the stored profile.
+  const name = one(sp.n) || p.display_name || p.full_name;
+  const role = one(sp.r) || p.title || "Ejen Hartanah";
+  const headline = one(sp.h);
   // Layout template already appends "· Super Ren Group", so strip the org here.
   const roleShort = role.split(" · ")[0];
   const areas = (p.service_areas ?? []).slice(0, 5).join(", ");
   const title = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${roleShort}`;
   const ogTitle = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${role}`;
   const description = sanitizeText(
-    `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. Pakar jual, sewa & komersial hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}.`,
+    headline
+      ? `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. ${headline}`
+      : `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. Pakar jual, sewa & komersial hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}.`,
   );
   const image = p.profile_photo_url
     ? p.profile_photo_url.startsWith("http")
@@ -98,6 +109,19 @@ export default async function AgentProfilePage({
   const intent = (msg: string) =>
     wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : "#";
 
+  // Single source for area copy so edits to service areas propagate everywhere.
+  const areasList = profile.service_areas ?? [];
+  const focusLabel = areasList.length ? areasList.slice(0, 3).join(" / ") : "Ampang / KL";
+  const focusFull = areasList.length ? areasList.join(", ") : "Ampang & Kuala Lumpur";
+  const defaultHeadline = `Pakar Jual, Sewa & Komersial Hartanah ${focusLabel}`;
+
+  // Share URL carries current info so the WhatsApp/social preview (whose
+  // crawler has no cookie) matches what the agent sees.
+  const shareParams = new URLSearchParams({ n: name });
+  if (profile.title) shareParams.set("r", profile.title);
+  shareParams.set("h", profile.headline || defaultHeadline);
+  const shareUrl = `${profileUrl}?${shareParams.toString()}`;
+
   // Listing hygiene: only public-safe statuses, split active vs portfolio.
   const active = listings.filter((l) => ACTIVE_STATUSES.includes(l.status));
   const portfolio = listings
@@ -125,7 +149,7 @@ export default async function AgentProfilePage({
   const ctas = [
     { label: "Saya Nak Jual Rumah", sub: "Semak harga pasaran & strategi jualan.", icon: Home, event: "profile_cta_sell" as const, msg: `Hi ${firstName}, saya berminat untuk jual rumah. Boleh bantu semak harga pasaran dan strategi jualan?` },
     { label: "Saya Nak Sewakan Unit", sub: "Cari tenant dan urus enquiry.", icon: Key, event: "profile_cta_rent" as const, msg: `Hi ${firstName}, saya berminat untuk sewakan unit. Boleh bantu semak potensi rental dan cari tenant?` },
-    { label: "Saya Nak Cari Rumah", sub: "Beli atau sewa sekitar Ampang / KL.", icon: Search, event: "profile_cta_buy" as const, msg: `Hi ${firstName}, saya sedang mencari rumah sekitar Ampang / KL. Boleh bantu saya?` },
+    { label: "Saya Nak Cari Rumah", sub: `Beli atau sewa sekitar ${focusLabel}.`, icon: Search, event: "profile_cta_buy" as const, msg: `Hi ${firstName}, saya sedang mencari rumah sekitar ${focusLabel}. Boleh bantu saya?` },
     { label: "Saya Nak Join Team", sub: "Sertai team hartanah Amirul.", icon: Users, event: "profile_cta_join_team" as const, msg: `Hi ${firstName}, saya berminat untuk tahu lebih lanjut tentang peluang join team Super Ren Group.` },
   ];
 
@@ -171,7 +195,7 @@ export default async function AgentProfilePage({
             <a href="#about" className="hover:text-foreground">About</a>
             <a href={intent(`Salam ${firstName}, saya ada pertanyaan.`)} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">Contact</a>
           </nav>
-          <ProfileShareButton url={profileUrl} name={name} />
+          <ProfileShareButton url={shareUrl} name={name} />
         </div>
       </header>
 
@@ -206,8 +230,7 @@ export default async function AgentProfilePage({
 
             {/* Positioning headline (editable in profile settings) */}
             <p className="mt-2 text-base font-semibold text-foreground">
-              {profile.headline ||
-                "Pakar Jual, Sewa & Komersial Hartanah Ampang / KL"}
+              {profile.headline || defaultHeadline}
             </p>
             <p className="text-sm text-muted-foreground">
               Bantu pemilik rumah, buyer, tenant dan agent baru dengan sistem
@@ -218,7 +241,7 @@ export default async function AgentProfilePage({
             <div className="mt-3 flex flex-wrap gap-1.5">
               {profile.ren_number ? <TrustChip>{profile.ren_number}</TrustChip> : null}
               {profile.agency_name ? <TrustChip>{profile.agency_name}</TrustChip> : null}
-              <TrustChip>Fokus Ampang / KL</TrustChip>
+              <TrustChip>Fokus {focusLabel}</TrustChip>
               {profile.title ? (
                 <TrustChip>{profile.title.split(" · ")[0]}</TrustChip>
               ) : null}
@@ -233,7 +256,7 @@ export default async function AgentProfilePage({
             <p className="mt-3 text-sm text-muted-foreground">
               {profile.bio
                 ? sanitizeText(profile.bio)
-                : `Saya membantu pemilik, pembeli dan penyewa di ${(profile.service_areas ?? ["Ampang"])[0]} serta sekitar Kuala Lumpur membuat keputusan hartanah dengan lebih jelas — daripada semakan harga pasaran, pemasaran, saringan prospek, viewing, rundingan sehingga proses jual/sewa selesai.`}
+                : `Saya membantu pemilik, pembeli dan penyewa di ${focusFull} membuat keputusan hartanah dengan lebih jelas — daripada semakan harga pasaran, pemasaran, saringan prospek, viewing, rundingan sehingga proses jual/sewa selesai.`}
             </p>
 
             {/* Intent CTAs — "Saya mahu…" */}
@@ -381,8 +404,8 @@ export default async function AgentProfilePage({
             />
             <HelpCard
               icon={MapPin}
-              title="Fokus Kawasan Ampang / KL"
-              desc={(profile.service_areas ?? ["Ampang"]).join(", ") + "."}
+              title={`Fokus Kawasan ${focusLabel}`}
+              desc={focusFull + "."}
             />
             <HelpCard
               icon={Award}
@@ -435,7 +458,7 @@ export default async function AgentProfilePage({
             {[
               "Bimbingan asas kerja hartanah",
               "Support listing dan pemasaran",
-              "Fokus kawasan Ampang / KL",
+              `Fokus kawasan ${focusLabel}`,
               "Sistem follow-up & kerja tersusun",
               "Sesuai untuk agent baru",
               "Bina momentum bersama team",
@@ -467,7 +490,7 @@ export default async function AgentProfilePage({
             <Faq q="Boleh bantu semak harga pasaran?" a="Ya. Pemilik boleh hubungi saya untuk semakan awal harga pasaran sebelum membuat keputusan jual atau sewa." />
             <Faq q="Dokumen apa diperlukan jika saya mahu jual rumah?" a="Biasanya salinan geran/strata title jika ada, IC owner, maklumat loan, bil cukai pintu/cukai tanah, dan butiran unit. Saya boleh bantu semak keperluan awal." />
             <Faq q="Berapa lama proses jual rumah?" a="Bergantung kepada harga, lokasi, keadaan pasaran, dokumen dan pembeli. Semakan awal boleh bantu tetapkan strategi harga dan pemasaran." />
-            <Faq q="Boleh bantu commercial property?" a="Ya, halaman ini turut memaparkan listing komersial dan saya boleh bantu pemilik atau buyer untuk hartanah komersial sekitar Ampang / KL." />
+            <Faq q="Boleh bantu commercial property?" a={`Ya, halaman ini turut memaparkan listing komersial dan saya boleh bantu pemilik atau buyer untuk hartanah komersial sekitar ${focusLabel}.`} />
             <Faq q="Adakah saya perlu bayar untuk semakan awal?" a="Untuk semakan awal, anda boleh hubungi saya dahulu bagi memahami situasi unit dan keperluan anda." />
             <Faq q="Apa beza listing aktif dan sold/rented?" a="Listing aktif ialah unit yang masih tersedia untuk enquiry. Sold/rented pula ialah rekod portfolio transaksi terdahulu." />
           </div>
@@ -506,7 +529,7 @@ export default async function AgentProfilePage({
       <ProfileStickyCta
         whatsappUrl={intent(`Salam ${firstName}, saya ada pertanyaan tentang hartanah.`)}
         phone={profile.phone}
-        url={profileUrl}
+        url={shareUrl}
         name={name}
       />
     </div>
