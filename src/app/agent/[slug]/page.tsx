@@ -129,14 +129,17 @@ export default async function AgentProfilePage({
 
   // Listing hygiene: only public-safe statuses, split active vs portfolio.
   const active = listings.filter((l) => ACTIVE_STATUSES.includes(l.status));
-  const portfolio = listings
-    .filter((l) => PORTFOLIO_STATUSES.includes(l.status))
-    .slice(0, 12);
+  const portfolio = listings.filter((l) => PORTFOLIO_STATUSES.includes(l.status));
   const featured = active.filter((l) => l.featured).slice(0, 8);
 
-  const teamCount = LOCAL_DEMO
-    ? Math.max(0, teamMemberIds(profile.user_id).length - 1)
-    : 0;
+  // The GTM is shown with the whole Super Ren Group team (36); other agents
+  // show their own team size. Keep it consistent with the bio/Join Team copy.
+  const isGtm = (profile.title ?? "").includes("Group Team Manager");
+  const teamCount = isGtm
+    ? 36
+    : LOCAL_DEMO
+      ? Math.max(0, teamMemberIds(profile.user_id).length - 1)
+      : 0;
 
   const socials = [
     { url: profile.facebook_url, icon: Facebook, label: "Facebook" },
@@ -398,29 +401,33 @@ export default async function AgentProfilePage({
           </div>
         </section>
 
-        {/* Why choose me — trust */}
+        {/* Why choose me — trust with metrics */}
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-bold">Kenapa Pilih {firstName}?</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <HelpCard
+            <TrustStat
               icon={BadgeCheck}
-              title="REN Berdaftar"
-              desc={`${profile.ren_number ?? "REN berdaftar"}${profile.agency_name ? ` di bawah ${profile.agency_name}` : ""}.`}
+              stat={profile.ren_number ?? "Berdaftar"}
+              title="REN Berdaftar & Diiktiraf"
+              desc={`Di bawah ${profile.agency_name ?? "Chester Properties HQ"} — boleh disemak di portal LPPEH.`}
             />
-            <HelpCard
-              icon={MapPin}
-              title={`Fokus Kawasan ${focusLabel}`}
-              desc={focusFull + "."}
-            />
-            <HelpCard
+            <TrustStat
               icon={Award}
-              title="Team & Sistem"
-              desc={`${profile.title ?? "Group Team Manager"} dengan sokongan team seramai 36 ejen di bawah Super Ren Group.`}
+              stat="36 Ejen"
+              title="Team Besar, Sistem Tersusun"
+              desc="Sokongan penuh dari listing, pemasaran hingga close deal."
             />
-            <HelpCard
+            <TrustStat
               icon={TrendingUp}
-              title="Rekod Listing & Transaksi"
-              desc={`${active.length} listing aktif dan ${portfolio.length} sold/rented dipaparkan di halaman ini.`}
+              stat={`${portfolio.length} Transaksi`}
+              title="Track Record Terbukti"
+              desc="Sold & rented merangkumi residential dan komersial sekitar Selangor / KL."
+            />
+            <TrustStat
+              icon={MapPin}
+              stat={`${(profile.service_areas ?? []).length} Zon Fokus`}
+              title="Pakar Kawasan Tempatan"
+              desc={focusFull + "."}
             />
           </div>
         </section>
@@ -546,6 +553,33 @@ function shortHash(s: string): string {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return Math.abs(h).toString(36).slice(0, 6);
+}
+
+function TrustStat({
+  icon: Icon,
+  stat,
+  title,
+  desc,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  stat: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold-foreground">
+          <Icon className="h-5 w-5" />
+        </span>
+        <span className="text-xl font-extrabold tracking-tight text-primary">
+          {stat}
+        </span>
+      </div>
+      <h3 className="mt-2 font-semibold leading-tight">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+    </div>
+  );
 }
 
 function TrustChip({ children }: { children: React.ReactNode }) {

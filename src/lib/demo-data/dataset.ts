@@ -274,11 +274,11 @@ export function teamMemberIds(leaderId: string): string[] {
 // Users & profiles
 // ---------------------------------------------------------------------------
 export const demoUsers: UserRow[] = [
-  { id: "user-superadmin", email: "superadmin@superren.demo", role: "super_admin", status: "active", created_at: daysAgoISO(400), last_login_at: NOW_ISO },
-  { id: "user-admin", email: "admin@superren.demo", role: "admin", status: "active", created_at: daysAgoISO(380), last_login_at: NOW_ISO },
+  { id: "user-superadmin", email: "superadmin@superren.group", role: "super_admin", status: "active", created_at: daysAgoISO(400), last_login_at: NOW_ISO },
+  { id: "user-admin", email: "admin@superren.group", role: "admin", status: "active", created_at: daysAgoISO(380), last_login_at: NOW_ISO },
   ...agents.map((a) => ({
     id: a.userId,
-    email: `${a.key}@superren.demo`,
+    email: `${a.key}@superren.group`,
     // Amirul Nasyriq (user-azlan) is the Group Team Manager.
     role: (a.userId === "user-azlan" ? "admin" : "agent") as UserRow["role"],
     status: a.status,
@@ -309,7 +309,7 @@ export const azlanProfile: AgentProfileRow = {
   headline: "Pakar Jual & Sewa Hartanah Kediaman dan Komersial Sekitar Selangor / KL",
   phone: "+60 19-823 6383",
   whatsapp: "+60198236383",
-  email: "amirul@superren.demo",
+  email: "amirul@superren.group",
   bio: "Group Team Manager Super Ren Group di bawah Chester Properties HQ, dengan sokongan team seramai 36 ejen. Membantu pemilik, pembeli & penyewa untuk hartanah kediaman dan komersial sekitar Selangor & Kuala Lumpur.",
   service_areas: ["Ampang / Hulu Klang", "Petaling Jaya", "Shah Alam / Klang", "Puchong", "Hartamas / Mont Kiara / KLCC"],
   specialization: ["subsale", "rental", "commercial"],
@@ -339,7 +339,7 @@ export const demoAgents: AgentProfileRow[] = [
     title: pick(TITLES),
     phone: `+60 1${between(2, 9)}-${between(300, 999)} ${between(1000, 9999)}`,
     whatsapp: `+601${between(2, 9)}${between(3000000, 9999999)}`,
-    email: `${a.key}@superren.demo`,
+    email: `${a.key}@superren.group`,
     bio: `Ejen hartanah berpengalaman di ${a.area} dan sekitarnya.`,
     service_areas: [a.area],
     specialization: a.sectors,
@@ -711,6 +711,23 @@ function generateForAgent(agent: Agent, opts: { rich?: boolean } = {}) {
 // Azlan first (rich), then the other active agents.
 generateForAgent(agents[0], { rich: true });
 for (const a of activeAgents.slice(1)) generateForAgent(a);
+
+// Amirul (GTM) carries a credible sold/rented track record for the public
+// profile — 18 sold + 9 rented = 27 portfolio items across his focus areas.
+for (let i = 0; i < 18; i++) {
+  makeListing({
+    agent: agents[0], cat: "subsale", area: pick(AZLAN_AREAS),
+    status: "sold", ageDays: between(30, 460),
+    withMedia: i < 4, views: between(120, 600), shares: between(6, 30), leads: between(2, 8),
+  });
+}
+for (let i = 0; i < 9; i++) {
+  makeListing({
+    agent: agents[0], cat: "rental", area: pick(AZLAN_AREAS),
+    status: "rented", ageDays: between(20, 300),
+    views: between(80, 400), shares: between(4, 20), leads: between(1, 6),
+  });
+}
 
 // A few inactive agents keep some older inventory for realism.
 for (const a of agents.filter((x) => x.status !== "active").slice(0, 8)) {
