@@ -58,11 +58,11 @@ export async function clearDemoData(confirm: string): Promise<DemoActionResult> 
     await admin.from(table).delete().eq("is_demo", true);
   }
 
-  // Delete demo auth users (emails @superren.demo)
+  // Delete demo auth users (emails @superren.group)
   try {
     const { data } = await admin.auth.admin.listUsers();
     const demoUsers = (data?.users ?? []).filter((u) =>
-      (u.email ?? "").endsWith("@superren.demo"),
+      (u.email ?? "").endsWith("@superren.group"),
     );
     for (const u of demoUsers) {
       await admin.auth.admin.deleteUser(u.id);

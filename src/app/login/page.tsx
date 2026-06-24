@@ -50,11 +50,11 @@ export default function LoginPage() {
                 Akaun demo:
                 <br />
                 <span className="font-mono text-foreground">
-                  admin@superren.demo
+                  admin@superren.group
                 </span>{" "}
                 /{" "}
                 <span className="font-mono text-foreground">
-                  aiman@superren.demo
+                  aiman@superren.group
                 </span>
                 <br />
                 Kata laluan:{" "}
