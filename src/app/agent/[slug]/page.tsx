@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   MessageCircle,
@@ -57,6 +58,7 @@ const TESTIMONIALS = [
   {
     name: "Datin Izzati Shafii",
     detail: "Double Storey Semi-D, Corner Unit · Putrajaya Presint 10",
+    photo: "/testimonials/datin-izzati.jpg",
     quote:
       "Thanks Nasyriq, Azlan & Team sebab berjaya jual rumah I within expectation price. Process lancar, sentiasa di-guide. Contact mudah & tahu my don'ts untuk timing — which I respect you all. Recommended & success ahead!",
     rating: 5,
@@ -480,24 +482,37 @@ export default async function AgentProfilePage({
               {TESTIMONIALS.map((t) => (
                 <figure
                   key={t.name}
-                  className="w-full max-w-xl rounded-2xl border border-border bg-card p-5 shadow-card"
+                  className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-card shadow-card"
                 >
-                  <div className="flex gap-0.5 text-gold">
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
+                  {t.photo ? (
+                    <div className="relative aspect-[16/10] w-full bg-muted">
+                      <Image
+                        src={t.photo}
+                        alt={`${t.name} bersama Amirul Nasyriq & team Super Ren Group`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 576px"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="p-5">
+                    <div className="flex gap-0.5 text-gold">
+                      {Array.from({ length: t.rating }).map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-current" />
+                      ))}
+                    </div>
+                    <blockquote className="mt-2 text-sm leading-relaxed text-foreground">
+                      &ldquo;{t.quote}&rdquo;
+                    </blockquote>
+                    <figcaption className="mt-3 border-t border-border pt-3">
+                      <span className="text-sm font-semibold text-foreground">
+                        {t.name}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {t.detail}
+                      </span>
+                    </figcaption>
                   </div>
-                  <blockquote className="mt-2 text-sm leading-relaxed text-foreground">
-                    &ldquo;{t.quote}&rdquo;
-                  </blockquote>
-                  <figcaption className="mt-3 border-t border-border pt-3">
-                    <span className="text-sm font-semibold text-foreground">
-                      {t.name}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {t.detail}
-                    </span>
-                  </figcaption>
                 </figure>
               ))}
             </div>
