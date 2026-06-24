@@ -27,6 +27,7 @@ import {
 import { getPublicAgent } from "@/lib/data/agents";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
 import { ListingExplorer } from "@/components/public/listing-explorer";
+import { AnimatedStat } from "@/components/public/animated-stat";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { teamMemberIds } from "@/lib/demo-data/dataset";
 import { Logo } from "@/components/brand";
@@ -75,10 +76,15 @@ export async function generateMetadata({
   const areas = (p.service_areas ?? []).slice(0, 5).join(", ");
   const title = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${roleShort}`;
   const ogTitle = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${role}`;
+  const activeCount = data.listings.filter((l) =>
+    ["available", "viewing_scheduled", "booked", "loan_in_progress", "spa_in_progress"].includes(l.status),
+  ).length;
+  const teamBit = (p.title ?? "").includes("Group Team Manager") ? "36 ejen · " : "";
+  const lead = headline
+    ? headline
+    : `Pakar jual, sewa & komersial hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}`;
   const description = sanitizeText(
-    headline
-      ? `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. ${headline}`
-      : `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. Pakar jual, sewa & komersial hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}.`,
+    `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. ${lead}. ${teamBit}${activeCount} listing aktif. Hubungi ${name}${p.ren_number ? ` ${p.ren_number}` : ""}.`,
   );
   const image = p.profile_photo_url
     ? p.profile_photo_url.startsWith("http")
@@ -355,7 +361,9 @@ export default async function AgentProfilePage({
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label} className="rounded-xl border border-border bg-card p-3 text-center">
-                <p className="text-2xl font-extrabold text-primary">{s.n}</p>
+                <p className="text-2xl font-extrabold text-primary">
+                  <AnimatedStat value={s.n} />
+                </p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             ))}
@@ -396,7 +404,7 @@ export default async function AgentProfilePage({
           <h2 className="mb-3 text-lg font-bold">Siapa Yang Saya Bantu</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <HelpCard icon={Home} title="Pemilik Rumah" desc="Untuk pemilik yang mahu jual atau sewakan unit dengan strategi pemasaran lebih tersusun." />
-            <HelpCard icon={Search} title="Buyer / Tenant" desc={`Untuk pembeli atau penyewa yang mahu cari rumah sekitar ${(profile.service_areas ?? ["Ampang"]).slice(0, 3).join(", ")}.`} />
+            <HelpCard icon={Search} title="Buyer / Tenant" desc={`Untuk pembeli atau penyewa yang mahu cari rumah sekitar ${(profile.service_areas ?? ["Ampang"])[0]}. Team kami cover semua zon di Selangor / Kuala Lumpur.`} />
             <HelpCard icon={Users} title="Agent Baru / Team" desc="Untuk individu yang mahu belajar sistem kerja hartanah bersama team yang lebih terarah." />
           </div>
         </section>
