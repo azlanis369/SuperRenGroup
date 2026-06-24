@@ -125,11 +125,25 @@ export default async function PublicListingPage({
     ? media
     : [{ id: "ph", url: resolveHero(null, listing.category), media_type: "image" as const, caption: null }];
 
-  // Similar listings from the same agent
+  // Related ACTIVE listings from the same agent (never mix in sold/rented/
+  // expired — those belong to a portfolio section, not active enquiry).
+  const RELATED_ACTIVE = [
+    "available",
+    "viewing_scheduled",
+    "booked",
+    "loan_in_progress",
+    "spa_in_progress",
+  ];
   let similar: ListingRow[] = [];
   if (agent) {
     const pub = await getPublicAgent(agent.slug);
-    similar = (pub?.listings ?? []).filter((x) => x.id !== listing.id).slice(0, 4);
+    const pool = (pub?.listings ?? []).filter(
+      (x) => x.id !== listing.id && RELATED_ACTIVE.includes(x.status),
+    );
+    // Prefer the same property type, then fill with the rest.
+    const sameType = pool.filter((x) => x.property_type === listing.property_type);
+    const rest = pool.filter((x) => x.property_type !== listing.property_type);
+    similar = [...sameType, ...rest].slice(0, 4);
   }
 
   const whatsappUrl = agent
