@@ -4,15 +4,25 @@ import { useMemo, useState } from "react";
 import { Search, X, Building2 } from "lucide-react";
 import type { ListingRow } from "@/lib/database.types";
 import { cn } from "@/lib/utils";
-import { type Segment, SEGMENT_LABELS, SEGMENT_ORDER, segmentOf } from "@/lib/segment";
+import {
+  transactionTypeOf,
+  propertyKindOf,
+  type TransactionType,
+  type PropertyKind,
+} from "@/lib/segment";
 import { PublicListingCard } from "@/components/public/public-listing-card";
 
-type Filter = "all" | Segment | "sold";
+type TxFilter = "all" | TransactionType;
+type PropFilter = "all" | PropertyKind;
+type StatusSet = "active" | "sold";
+
+const TX_ORDER: TransactionType[] = ["Subsale", "Rental"];
+const PROP_ORDER: PropertyKind[] = ["Residential", "Commercial", "Land"];
 
 /**
- * Frontend-only listing browser for the public profile: category chips,
- * keyword search (title/area) and a price range. Works on the data already on
- * the page — no extra requests.
+ * Frontend-only listing browser: filter by transaction type × property type ×
+ * status, plus keyword search and price range. Works on data already on the
+ * page — no extra requests.
  */
 export function ListingExplorer({
   active,
@@ -23,47 +33,40 @@ export function ListingExplorer({
   portfolio: (ListingRow & { is_demo?: boolean })[];
   waNumber?: string | null;
 }) {
-  const [filter, setFilter] = useState<Filter>("all");
+  const [tx, setTx] = useState<TxFilter>("all");
+  const [prop, setProp] = useState<PropFilter>("all");
+  const [statusSet, setStatusSet] = useState<StatusSet>("active");
   const [q, setQ] = useState("");
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
 
-  // Which segment chips to show (only those present in active listings).
-  const segments = useMemo(() => {
-    const present = new Set(active.map((l) => segmentOf(l)));
-    return SEGMENT_ORDER.filter((s) => present.has(s));
-  }, [active]);
+  const base = statusSet === "sold" ? portfolio : active;
+
+  // Only offer chips for values that actually exist in the current pool.
+  const txPresent = useMemo(() => {
+    const s = new Set(base.map((l) => transactionTypeOf(l)));
+    return TX_ORDER.filter((t) => s.has(t));
+  }, [base]);
+  const propPresent = useMemo(() => {
+    const s = new Set(base.map((l) => propertyKindOf(l)));
+    return PROP_ORDER.filter((p) => s.has(p));
+  }, [base]);
 
   const rows = useMemo(() => {
-    const base = filter === "sold" ? portfolio : active;
     const needle = q.trim().toLowerCase();
     const lo = min ? Number(min) : null;
     const hi = max ? Number(max) : null;
     return base.filter((l) => {
-      if (filter !== "all" && filter !== "sold" && segmentOf(l) !== filter)
+      if (tx !== "all" && transactionTypeOf(l) !== tx) return false;
+      if (prop !== "all" && propertyKindOf(l) !== prop) return false;
+      if (needle && !`${l.title} ${l.area}`.toLowerCase().includes(needle))
         return false;
-      if (needle) {
-        const hay = `${l.title} ${l.area}`.toLowerCase();
-        if (!hay.includes(needle)) return false;
-      }
       const price = Number(l.price) || 0;
       if (lo !== null && price < lo) return false;
       if (hi !== null && price > hi) return false;
       return true;
     });
-  }, [filter, q, min, max, active, portfolio]);
-
-  const chips: { key: Filter; label: string; count: number }[] = [
-    { key: "all", label: "Semua", count: active.length },
-    ...segments.map((s) => ({
-      key: s as Filter,
-      label: SEGMENT_LABELS[s],
-      count: active.filter((l) => segmentOf(l) === s).length,
-    })),
-    ...(portfolio.length
-      ? [{ key: "sold" as Filter, label: "Sold / Rented", count: portfolio.length }]
-      : []),
-  ];
+  }, [base, tx, prop, q, min, max]);
 
   return (
     <section className="mt-7">
@@ -74,23 +77,48 @@ export function ListingExplorer({
         </span>
       </div>
 
-      {/* Category chips */}
-      <div className="flex flex-wrap gap-2">
-        {chips.map((c) => (
-          <button
-            key={c.key}
-            onClick={() => setFilter(c.key)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-              filter === c.key
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card text-muted-foreground hover:bg-muted",
-            )}
-          >
-            {c.label}
-            <span className="opacity-70">{c.count}</span>
-          </button>
-        ))}
+      <div className="space-y-2">
+        {/* Status set toggle */}
+        {portfolio.length ? (
+          <ChipRow label="Status">
+            <Chip
+              active={statusSet === "active"}
+              onClick={() => { setStatusSet("active"); setTx("all"); setProp("all"); }}
+            >
+              Aktif <span className="opacity-70">{active.length}</span>
+            </Chip>
+            <Chip
+              active={statusSet === "sold"}
+              onClick={() => { setStatusSet("sold"); setTx("all"); setProp("all"); }}
+            >
+              Sold / Rented <span className="opacity-70">{portfolio.length}</span>
+            </Chip>
+          </ChipRow>
+        ) : null}
+
+        {/* Transaction type */}
+        {txPresent.length > 1 ? (
+          <ChipRow label="Transaksi">
+            <Chip active={tx === "all"} onClick={() => setTx("all")}>Semua</Chip>
+            {txPresent.map((t) => (
+              <Chip key={t} active={tx === t} onClick={() => setTx(tx === t ? "all" : t)}>
+                {t}
+              </Chip>
+            ))}
+          </ChipRow>
+        ) : null}
+
+        {/* Property type */}
+        {propPresent.length > 1 ? (
+          <ChipRow label="Jenis Hartanah">
+            <Chip active={prop === "all"} onClick={() => setProp("all")}>Semua</Chip>
+            {propPresent.map((p) => (
+              <Chip key={p} active={prop === p} onClick={() => setProp(prop === p ? "all" : p)}>
+                {p}
+              </Chip>
+            ))}
+          </ChipRow>
+        ) : null}
       </div>
 
       {/* Search + price range */}
@@ -145,5 +173,46 @@ export function ListingExplorer({
         </div>
       )}
     </section>
+  );
+}
+
+function ChipRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-24 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-muted-foreground hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
   );
 }
