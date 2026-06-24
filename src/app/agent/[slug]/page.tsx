@@ -23,6 +23,7 @@ import {
   UserPlus,
   Sparkles,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { getPublicAgent } from "@/lib/data/agents";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
@@ -50,6 +51,17 @@ const ACTIVE_STATUSES = [
   "spa_in_progress",
 ];
 const PORTFOLIO_STATUSES = ["sold", "rented"];
+
+// Real, agent-supplied client testimonials only.
+const TESTIMONIALS = [
+  {
+    name: "Datin Izzati Shafii",
+    detail: "Double Storey Semi-D, Corner Unit · Putrajaya Presint 10",
+    quote:
+      "Thanks Nasyriq, Azlan & Team sebab berjaya jual rumah I within expectation price. Process lancar, sentiasa di-guide. Contact mudah & tahu my don'ts untuk timing — which I respect you all. Recommended & success ahead!",
+    rating: 5,
+  },
+];
 
 export async function generateMetadata({
   params,
@@ -460,6 +472,38 @@ export default async function AgentProfilePage({
         </div>
 
         {/* Lead capture */}
+        {/* Testimonials — real client feedback */}
+        {TESTIMONIALS.length ? (
+          <section className="mt-8">
+            <h2 className="mb-3 text-lg font-bold">Apa Kata Klien</h2>
+            <div className="flex flex-wrap justify-center gap-3">
+              {TESTIMONIALS.map((t) => (
+                <figure
+                  key={t.name}
+                  className="w-full max-w-xl rounded-2xl border border-border bg-card p-5 shadow-card"
+                >
+                  <div className="flex gap-0.5 text-gold">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="mt-2 text-sm leading-relaxed text-foreground">
+                    &ldquo;{t.quote}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-3 border-t border-border pt-3">
+                    <span className="text-sm font-semibold text-foreground">
+                      {t.name}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {t.detail}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-8">
           <LeadCaptureForm waNumber={wa} firstName={firstName} />
         </section>
