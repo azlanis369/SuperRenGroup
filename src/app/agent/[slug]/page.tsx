@@ -111,8 +111,13 @@ export default async function AgentProfilePage({
 
   // Single source for area copy so edits to service areas propagate everywhere.
   const areasList = profile.service_areas ?? [];
-  const focusLabel = areasList.length ? areasList.slice(0, 3).join(" / ") : "Ampang / KL";
   const focusFull = areasList.length ? areasList.join(", ") : "Ampang & Kuala Lumpur";
+  // Short region label: many granular zones read better as a region summary.
+  const focusLabel = !areasList.length
+    ? "Ampang / KL"
+    : areasList.length > 3
+      ? "Selangor / KL"
+      : areasList.join(", ");
   const defaultHeadline = `Pakar Jual, Sewa & Komersial Hartanah ${focusLabel}`;
 
   // Listing hygiene: only public-safe statuses, split active vs portfolio.
@@ -403,7 +408,7 @@ export default async function AgentProfilePage({
             <HelpCard
               icon={Award}
               title="Team & Sistem"
-              desc={`${profile.title ?? "Group Team Manager"} dengan sokongan ${profile.agency_name ?? "Super Ren Group"}.`}
+              desc={`${profile.title ?? "Group Team Manager"} dengan sokongan team seramai 36 ejen di bawah Super Ren Group.`}
             />
             <HelpCard
               icon={TrendingUp}
@@ -453,8 +458,8 @@ export default async function AgentProfilePage({
               "Support listing dan pemasaran",
               `Fokus kawasan ${focusLabel}`,
               "Sistem follow-up & kerja tersusun",
-              "Sesuai untuk agent baru",
-              "Bina momentum bersama team",
+              "Sokongan team seramai 36 ejen di bawah Super Ren Group",
+              "Sesuai untuk agent baru & REN aktif",
             ].map((b) => (
               <li key={b} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
