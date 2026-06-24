@@ -431,6 +431,20 @@ function titleFor(cat: ListingCategory, area: string, type: PropertyType): strin
   return `${pick(SUBSALE_TITLES)}, ${area}`;
 }
 
+// Realistic development / project names so cards read with identity instead of
+// a generic "High-Floor Apartment, Ampang".
+const DEV_PREFIX = ["Residensi", "Taman", "Casa", "Vista", "Sri", "Bandar"];
+const DEV_SUFFIX = ["Residences", "Heights", "Park", "Garden Homes", "Court", "Avenue"];
+const COMMERCIAL_DEV = ["Business Park", "Commercial Hub", "Trade Centre", "SOHO", "Square"];
+function devNameFor(area: string, type: PropertyType): string | null {
+  if (type === "land") return null;
+  if (type === "shop" || type === "office")
+    return `${area} ${pick(COMMERCIAL_DEV)}`;
+  return chance(0.5)
+    ? `${pick(DEV_PREFIX)} ${area}`
+    : `${area} ${pick(DEV_SUFFIX)}`;
+}
+
 type MakeOpts = {
   agent: Agent;
   cat: ListingCategory;
@@ -463,6 +477,7 @@ function makeListing(o: MakeOpts): ListingRow {
     agent_id: o.agent.userId,
     category: o.cat,
     title,
+    development_name: devNameFor(o.area, type),
     slug: slugify(title) + "-" + id,
     property_type: type,
     area: o.area,
@@ -750,6 +765,7 @@ for (const a of agents.filter((x) => x.status !== "active").slice(0, 8)) {
     agent_id: "user-azlan",
     category: "subsale",
     title: "Shoplot 3.5 Tingkat, Excella Business Park, Ampang",
+    development_name: "Excella Business Park",
     slug: "shoplot-excella-business-park-ampang",
     property_type: "shop",
     area: "Ampang",

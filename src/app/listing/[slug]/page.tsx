@@ -171,8 +171,13 @@ export default async function PublicListingPage({
                 <StatusBadge status={listing.status} />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-balance">
-                {listing.title}
+                {listing.development_name || listing.title}
               </h1>
+              {listing.development_name ? (
+                <p className="mt-0.5 text-sm font-medium text-muted-foreground">
+                  {listing.title}
+                </p>
+              ) : null}
               <p className="mt-1 flex items-center gap-1 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 {listing.show_exact_address && listing.address_public

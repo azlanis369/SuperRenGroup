@@ -56,8 +56,12 @@ export function PublicListingCard({
           <p className="whitespace-nowrap font-bold tabular-nums text-primary">
             {priceText}
           </p>
-          <h3 className="line-clamp-1 text-sm font-semibold">{listing.title}</h3>
-          <p className="text-xs text-muted-foreground">{listing.area}</p>
+          <h3 className="line-clamp-1 text-sm font-semibold">
+            {listing.development_name || listing.title}
+          </h3>
+          <p className="line-clamp-1 text-xs text-muted-foreground">
+            {listing.development_name ? listing.title : listing.area}
+          </p>
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
             {listing.bedrooms ? (
               <span className="flex items-center gap-1">
