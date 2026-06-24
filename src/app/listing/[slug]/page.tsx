@@ -22,7 +22,7 @@ import {
   type Furnishing,
   type Tenure,
 } from "@/lib/constants";
-import { SEGMENT_LABELS, segmentOf } from "@/lib/segment";
+import { transactionTypeOf, propertyKindOf } from "@/lib/segment";
 import { formatPrice, absoluteUrl, sanitizeText } from "@/lib/utils";
 import { resolveHero } from "@/lib/media";
 import { buildInquiryWhatsAppUrl } from "@/lib/share";
@@ -152,10 +152,8 @@ export default async function PublicListingPage({
 
             <div>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge tone="primary">{SEGMENT_LABELS[segmentOf(listing)]}</Badge>
-                <Badge tone="outline">
-                  {listing.category === "rental" ? "Untuk Disewa" : "Untuk Dijual"}
-                </Badge>
+                <Badge tone="primary">{transactionTypeOf(listing)}</Badge>
+                <Badge tone="gold">{propertyKindOf(listing)}</Badge>
                 <StatusBadge status={listing.status} />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-balance">
