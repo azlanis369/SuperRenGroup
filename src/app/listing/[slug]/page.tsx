@@ -15,7 +15,6 @@ import {
 import { getPublicListingBySlug } from "@/lib/data/listings";
 import { getListingAgent, getPublicAgent } from "@/lib/data/agents";
 import {
-  CATEGORY_LABELS,
   PROPERTY_TYPE_LABELS,
   FURNISHING_LABELS,
   TENURE_LABELS,
@@ -23,6 +22,7 @@ import {
   type Furnishing,
   type Tenure,
 } from "@/lib/constants";
+import { SEGMENT_LABELS, segmentOf } from "@/lib/segment";
 import { formatPrice, absoluteUrl, sanitizeText } from "@/lib/utils";
 import { resolveHero } from "@/lib/media";
 import { buildInquiryWhatsAppUrl } from "@/lib/share";
@@ -152,7 +152,10 @@ export default async function PublicListingPage({
 
             <div>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge tone="primary">{CATEGORY_LABELS[listing.category]}</Badge>
+                <Badge tone="primary">{SEGMENT_LABELS[segmentOf(listing)]}</Badge>
+                <Badge tone="outline">
+                  {listing.category === "rental" ? "Untuk Disewa" : "Untuk Dijual"}
+                </Badge>
                 <StatusBadge status={listing.status} />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-balance">

@@ -59,10 +59,14 @@ export async function generateMetadata({
   if (!data) return { title: "Profil tidak dijumpai" };
   const p = data.profile;
   const name = p.display_name || p.full_name;
+  const role = p.title ?? "Ejen Hartanah";
+  // Layout template already appends "· Super Ren Group", so strip the org here.
+  const roleShort = role.split(" · ")[0];
   const areas = (p.service_areas ?? []).slice(0, 5).join(", ");
-  const title = `${name}${p.ren_number ? ` ${p.ren_number}` : ""} | Ampang & KL Property Negotiator`;
+  const title = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${roleShort}`;
+  const ogTitle = `${name}${p.ren_number ? ` · ${p.ren_number}` : ""} | ${role}`;
   const description = sanitizeText(
-    `${name}, Real Estate Negotiator${p.agency_name ? ` bersama ${p.agency_name}` : ""}, membantu pemilik, pembeli & penyewa hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}.`,
+    `${name}, ${role}${p.agency_name ? ` · ${p.agency_name}` : ""}. Pakar jual, sewa & komersial hartanah sekitar ${areas || "Ampang & Kuala Lumpur"}.`,
   );
   const image = p.profile_photo_url
     ? p.profile_photo_url.startsWith("http")
@@ -72,8 +76,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, images: [{ url: image }], url: absoluteUrl(`/agent/${slug}`), type: "profile" },
-    twitter: { card: "summary", title, description, images: [image] },
+    openGraph: { title: ogTitle, description, images: [{ url: image }], url: absoluteUrl(`/agent/${slug}`), type: "profile" },
+    twitter: { card: "summary", title: ogTitle, description, images: [image] },
   };
 }
 
@@ -207,6 +211,16 @@ export default async function AgentProfilePage({
               Bantu pemilik rumah, buyer, tenant dan agent baru dengan sistem
               pemasaran hartanah yang lebih tersusun.
             </p>
+
+            {/* Micro trust row */}
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {profile.ren_number ? <TrustChip>{profile.ren_number}</TrustChip> : null}
+              {profile.agency_name ? <TrustChip>{profile.agency_name}</TrustChip> : null}
+              <TrustChip>Fokus Ampang / KL</TrustChip>
+              {profile.title ? (
+                <TrustChip>{profile.title.split(" · ")[0]}</TrustChip>
+              ) : null}
+            </div>
             {profile.service_areas?.length ? (
               <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
@@ -493,6 +507,15 @@ export default async function AgentProfilePage({
         name={name}
       />
     </div>
+  );
+}
+
+function TrustChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/5 px-2.5 py-1 text-[11px] font-medium text-foreground">
+      <BadgeCheck className="h-3 w-3 text-gold" />
+      {children}
+    </span>
   );
 }
 
