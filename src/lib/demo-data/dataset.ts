@@ -306,6 +306,7 @@ export const azlanProfile: AgentProfileRow = {
   ren_number: "REN 39593",
   agency_name: AGENCY_NAME,
   title: "Group Team Manager · Super Ren Group",
+  headline: "Pakar Jual, Sewa & Komersial Hartanah Ampang / KL",
   phone: "+60 19-823 6383",
   whatsapp: "+60198236383",
   email: "amirul@superren.demo",

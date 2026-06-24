@@ -22,6 +22,7 @@ import {
   TrendingUp,
   UserPlus,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { getPublicAgent } from "@/lib/data/agents";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
@@ -203,9 +204,10 @@ export default async function AgentProfilePage({
               </p>
             ) : null}
 
-            {/* Positioning headline */}
+            {/* Positioning headline (editable in profile settings) */}
             <p className="mt-2 text-base font-semibold text-foreground">
-              Pakar Jual, Sewa &amp; Komersial Hartanah Ampang / KL
+              {profile.headline ||
+                "Pakar Jual, Sewa & Komersial Hartanah Ampang / KL"}
             </p>
             <p className="text-sm text-muted-foreground">
               Bantu pemilik rumah, buyer, tenant dan agent baru dengan sistem
@@ -247,12 +249,12 @@ export default async function AgentProfilePage({
                       href={intent(c.msg)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-50/60 p-3 text-left transition-colors hover:bg-emerald-100/70"
+                      className="group/cta flex items-center gap-3 rounded-xl border border-emerald-600/25 bg-gradient-to-br from-emerald-50 to-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-600/50 hover:shadow-elevated"
                     >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                        <Icon className="h-4 w-4" />
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                        <Icon className="h-5 w-5" />
                       </span>
-                      <span className="min-w-0">
+                      <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold text-foreground">
                           {c.label}
                         </span>
@@ -260,6 +262,7 @@ export default async function AgentProfilePage({
                           {c.sub}
                         </span>
                       </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-emerald-600/60 transition-transform group-hover/cta:translate-x-0.5" />
                     </TrackedLink>
                   );
                 })}

@@ -39,6 +39,7 @@ export async function saveProfile(input: unknown): Promise<ActionResult> {
       ren_number: data.ren_number || null,
       agency_name: data.agency_name || null,
       title: data.title || null,
+      headline: data.headline || null,
       phone: data.phone,
       whatsapp: data.whatsapp,
       email: data.email,

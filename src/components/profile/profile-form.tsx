@@ -80,6 +80,7 @@ export function ProfileForm({
       ren_number: profile?.ren_number ?? "",
       agency_name: profile?.agency_name ?? "",
       title: profile?.title ?? "",
+      headline: profile?.headline ?? "",
       phone: profile?.phone ?? "",
       whatsapp: profile?.whatsapp ?? "",
       email: profile?.email ?? defaultEmail,
@@ -240,6 +241,12 @@ export function ProfileForm({
         </Field>
         <Field label="Jawatan" error={errors.title?.message}>
           <Input {...register("title")} placeholder="Senior Negotiator" />
+        </Field>
+        <Field label="Tagline / Headline awam" error={errors.headline?.message}>
+          <Input
+            {...register("headline")}
+            placeholder="Cth: Pakar Jual, Sewa & Komersial Hartanah Ampang / KL"
+          />
         </Field>
       </Section>
 
