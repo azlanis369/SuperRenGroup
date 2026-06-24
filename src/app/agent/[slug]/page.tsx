@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { getPublicAgent } from "@/lib/data/agents";
 import { absoluteUrl, sanitizeText, toWaNumber } from "@/lib/utils";
-import { SEGMENT_ORDER, SEGMENT_LABELS, segmentOf } from "@/lib/segment";
+import { ListingExplorer } from "@/components/public/listing-explorer";
 import { LOCAL_DEMO } from "@/lib/demo-mode";
 import { teamMemberIds } from "@/lib/demo-data/dataset";
 import { Logo } from "@/components/brand";
@@ -99,10 +99,6 @@ export default async function AgentProfilePage({
     .filter((l) => PORTFOLIO_STATUSES.includes(l.status))
     .slice(0, 12);
   const featured = active.filter((l) => l.featured).slice(0, 8);
-  const bySegment = SEGMENT_ORDER.map((seg) => ({
-    seg,
-    items: active.filter((l) => segmentOf(l) === seg),
-  })).filter((g) => g.items.length > 0);
 
   const teamCount = LOCAL_DEMO
     ? Math.max(0, teamMemberIds(profile.user_id).length - 1)
@@ -389,25 +385,19 @@ export default async function AgentProfilePage({
           {featured.length ? (
             <ListingCarousel title="Listing Unggulan" listings={featured} accent waNumber={profile.whatsapp} />
           ) : null}
-          {bySegment.map((group) => (
-            <ListingCarousel
-              key={group.seg}
-              title={SEGMENT_LABELS[group.seg]}
-              listings={group.items}
+
+          {active.length || portfolio.length ? (
+            <ListingExplorer
+              active={active}
+              portfolio={portfolio}
               waNumber={profile.whatsapp}
             />
-          ))}
-          {active.length === 0 ? (
+          ) : (
             <p className="mt-8 rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
               Tiada listing aktif buat masa ini. Hubungi saya untuk keperluan anda.
             </p>
-          ) : null}
+          )}
         </div>
-
-        {/* Recently sold / rented */}
-        {portfolio.length ? (
-          <ListingCarousel title="Recently Sold / Rented" listings={portfolio} waNumber={profile.whatsapp} />
-        ) : null}
 
         {/* Lead capture */}
         <section className="mt-8">
