@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, ClipboardList } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 const ROLES = ["Owner", "Buyer", "Tenant", "Agent"] as const;
@@ -62,11 +62,17 @@ export function LeadCaptureForm({
       onSubmit={submit}
       className="rounded-2xl border border-border bg-card p-5 shadow-card"
     >
-      <h2 className="text-lg font-bold">Semak Keperluan Anda</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Isi ringkas — mesej WhatsApp akan disiapkan automatik untuk dihantar
-        kepada {firstName}.
-      </p>
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <ClipboardList className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-lg font-bold leading-tight">Semak Keperluan Anda</h2>
+          <p className="text-sm text-muted-foreground">
+            Isi ringkas — mesej WhatsApp disiapkan automatik untuk {firstName}.
+          </p>
+        </div>
+      </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Field label="Nama">

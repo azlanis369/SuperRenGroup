@@ -21,7 +21,7 @@ export function ProfileStickyCta({
 }) {
   const tel = phone ? phone.replace(/[^\d+]/g, "") : null;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgba(11,31,51,0.10)] backdrop-blur lg:hidden">
       <div className="mx-auto flex max-w-4xl items-center gap-2">
         {whatsappUrl !== "#" ? (
           <a

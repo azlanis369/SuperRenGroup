@@ -14,6 +14,7 @@ export const profileSchema = z.object({
   ren_number: z.string().trim().max(40).optional().or(z.literal("")),
   agency_name: z.string().trim().max(120).optional().or(z.literal("")),
   title: z.string().trim().max(80).optional().or(z.literal("")),
+  headline: z.string().trim().max(120).optional().or(z.literal("")),
   phone: z
     .string()
     .trim()

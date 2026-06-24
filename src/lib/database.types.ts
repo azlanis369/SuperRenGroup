@@ -40,6 +40,7 @@ export type AgentProfileRow = {
   ren_number: string | null;
   agency_name: string | null;
   title: string | null;
+  headline?: string | null;
   phone: string | null;
   whatsapp: string | null;
   email: string | null;

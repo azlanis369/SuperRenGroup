@@ -24,7 +24,7 @@ export function PublicListingCard({
   const waMsg = `Salam, saya berminat dengan listing ini: ${listing.title} - ${priceText}. Boleh kongsi detail lanjut & susun viewing?`;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated">
       <Link href={`/listing/${listing.slug}`} className="group block">
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           <Image

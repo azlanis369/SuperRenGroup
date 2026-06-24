@@ -17,6 +17,7 @@ const FIELDS = [
   "ren_number",
   "agency_name",
   "title",
+  "headline",
   "phone",
   "whatsapp",
   "email",
