@@ -62,6 +62,7 @@ export type ListingRow = {
   agent_id: string;
   category: ListingCategory;
   title: string;
+  development_name?: string | null;
   slug: string;
   property_type: PropertyType;
   area: string;
