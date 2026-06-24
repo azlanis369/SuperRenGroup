@@ -39,3 +39,21 @@ export function segmentOf(
   if (l.category === "rental") return "rental";
   return "subsale";
 }
+
+// --- Explicit taxonomy: transaction type · property type · status -----------
+// A listing has three independent dimensions. Excella Business Park, e.g., is
+// Subsale (transaction) + Commercial (property) + Available (status).
+
+export type TransactionType = "Subsale" | "Rental";
+export type PropertyKind = "Residential" | "Commercial" | "Land";
+
+export function transactionTypeOf(l: Pick<ListingRow, "category">): TransactionType {
+  return l.category === "rental" ? "Rental" : "Subsale";
+}
+
+export function propertyKindOf(l: Pick<ListingRow, "property_type">): PropertyKind {
+  if (l.property_type === "land") return "Land";
+  if (l.property_type === "shop" || l.property_type === "office")
+    return "Commercial";
+  return "Residential";
+}

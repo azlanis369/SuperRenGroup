@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { BedDouble, Bath, Car, Maximize, MessageCircle } from "lucide-react";
 import type { ListingRow } from "@/lib/database.types";
-import { formatPrice, toWaNumber } from "@/lib/utils";
-import { SEGMENT_LABELS, segmentOf } from "@/lib/segment";
+import { formatPrice, toWaNumber, absoluteUrl } from "@/lib/utils";
+import { transactionTypeOf, propertyKindOf } from "@/lib/segment";
 import { resolveHero } from "@/lib/media";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -21,7 +21,17 @@ export function PublicListingCard({
   const hero = resolveHero(listing.hero_image_url, listing.category, index);
   const priceText = listing.price_display || formatPrice(listing.price);
   const wa = waNumber ? toWaNumber(waNumber) : null;
-  const waMsg = `Salam, saya berminat dengan listing ini: ${listing.title} - ${priceText}. Boleh kongsi detail lanjut & susun viewing?`;
+  const waMsg = [
+    "Salam, saya berminat dengan listing ini:",
+    "",
+    `Listing: ${listing.title}`,
+    `Jenis: ${transactionTypeOf(listing)} ${propertyKindOf(listing)}`,
+    `Harga: ${priceText}`,
+    `Lokasi: ${listing.area}`,
+    `Link: ${absoluteUrl(`/listing/${listing.slug}`)}`,
+    "",
+    "Boleh kongsi detail lanjut & susun viewing?",
+  ].join("\n");
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated">
@@ -34,8 +44,9 @@ export function PublicListingCard({
             sizes="(max-width: 768px) 50vw, 280px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute left-2 top-2 flex gap-1.5">
-            <Badge tone="primary">{SEGMENT_LABELS[segmentOf(listing)]}</Badge>
+          <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
+            <Badge tone="primary">{transactionTypeOf(listing)}</Badge>
+            <Badge tone="gold">{propertyKindOf(listing)}</Badge>
           </div>
           <div className="absolute right-2 top-2">
             <StatusBadge status={listing.status} />
