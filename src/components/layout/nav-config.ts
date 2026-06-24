@@ -11,6 +11,7 @@ import {
   UsersRound,
   Columns3,
   CalendarClock,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { ROLES, type Role } from "@/lib/constants";
@@ -33,6 +34,7 @@ export const SIDEBAR_NAV: NavItem[] = [
   { labelKey: "deals", href: "/deals", icon: Handshake, roles: ALL },
   { labelKey: "leads", href: "/leads", icon: Users, roles: ALL },
   { labelKey: "viewings", href: "/viewings", icon: CalendarClock, roles: ALL },
+  { labelKey: "tasks", href: "/tasks", icon: ListChecks, roles: ALL },
   { labelKey: "pipeline", href: "/pipeline", icon: Columns3, roles: ALL },
   {
     labelKey: "team",
