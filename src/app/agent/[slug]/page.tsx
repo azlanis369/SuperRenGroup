@@ -304,16 +304,17 @@ export default async function AgentProfilePage({
             ) : null}
           </dl>
           <a
-            href="https://search.lppeh.gov.my/"
+            href="https://www.lppeh.gov.my/"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gold bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-gold/10"
           >
-            <BadgeCheck className="h-4 w-4 text-gold" /> Semak REN di Portal LPPEH
+            <BadgeCheck className="h-4 w-4 text-gold" /> Semak di Portal Rasmi LPPEH
           </a>
           <p className="mt-2 text-xs text-muted-foreground">
-            Pengesahan rasmi LPPEH — cari mengikut No. REN, IC atau nombor
-            telefon. Sila sahkan butiran sebelum sebarang transaksi.
+            Buka portal rasmi LPPEH, pilih semakan ejen/REN berdaftar, dan cari
+            mengikut No. REN, IC atau nama. Sila sahkan sebelum sebarang
+            transaksi.
           </p>
         </section>
 
