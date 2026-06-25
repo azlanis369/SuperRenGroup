@@ -216,7 +216,7 @@ export default async function AgentProfilePage({
       <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href={`/agent/${slug}`}>
-            <Logo />
+            <Logo subtitle="Real Estate" />
           </Link>
           <nav className="hidden items-center gap-5 text-sm font-medium text-muted-foreground sm:flex">
             <a href="#listings" className="hover:text-foreground">Listings</a>
