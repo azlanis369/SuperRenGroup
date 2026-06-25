@@ -157,7 +157,7 @@ export default async function PublicListingPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }}
       />
       <ViewTracker listingId={listing.id} />
-      <PublicHeader />
+      <PublicHeader homeHref={agent ? `/agent/${agent.slug}` : `/listing/${listing.slug}`} />
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6 lg:pb-5">
         <div className="grid gap-6 lg:grid-cols-3">
@@ -331,11 +331,11 @@ export default async function PublicListingPage({
   );
 }
 
-function PublicHeader() {
+function PublicHeader({ homeHref }: { homeHref: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-        <Link href="/">
+        <Link href={homeHref}>
           <Logo />
         </Link>
         <span className="text-xs text-muted-foreground">Property Catalog</span>
