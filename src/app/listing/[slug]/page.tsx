@@ -336,7 +336,7 @@ function PublicHeader({ homeHref }: { homeHref: string }) {
     <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
         <Link href={homeHref}>
-          <Logo />
+          <Logo subtitle="Real Estate" />
         </Link>
         <span className="text-xs text-muted-foreground">Property Catalog</span>
       </div>

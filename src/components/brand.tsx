@@ -4,9 +4,13 @@ import { cn } from "@/lib/utils";
 export function Logo({
   className,
   compact = false,
+  subtitle = "Property CRM",
 }: {
   className?: string;
   compact?: boolean;
+  /** Small label under the wordmark. Use a public label (e.g. "Real Estate")
+   * on public pages so the brand doesn't read as an internal CRM. */
+  subtitle?: string;
 }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
@@ -18,9 +22,11 @@ export function Logo({
           <span className="text-[15px] font-bold tracking-tight text-foreground">
             Super Ren <span className="text-gold">Group</span>
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            Property CRM
-          </span>
+          {subtitle ? (
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              {subtitle}
+            </span>
+          ) : null}
         </span>
       )}
     </div>
